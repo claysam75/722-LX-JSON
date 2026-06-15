@@ -13,18 +13,16 @@ npm run dev
 
 Accessible at http://ip:4002
 
-````
-
 ---
 
 ## Chamsys Zone Mapping
 
-| Zone | Area |
-|------|------|
-| 5 | Sun Deck |
-| 2 | Main Deck |
-| 3 | Lower Deck |
-| 4 | Underwater |
+| Zone | Area       |
+| ---- | ---------- |
+| 5    | Sun Deck   |
+| 2    | Main Deck  |
+| 3    | Lower Deck |
+| 4    | Underwater |
 
 ---
 
@@ -44,9 +42,10 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the discrete lighting 
 - `id=<TARGET>` — returns payload(s) for just that target.
 
 **Targets:**
+
 - `POOL`
 - `WHIRLPOOL`
-- `YACHT NAME` *(returns two payloads — see below)*
+- `YACHT NAME` _(returns two payloads — see below)_
 - `UNDERWATER ALL`
 - `UNDERWATER STERN`
 - `UNDERWATER AFT PS`
@@ -65,10 +64,11 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the discrete lighting 
 **`YACHT NAME` payloads:**
 
 `YACHT NAME` always produces two entries — one for the upper deck stbd name, and one reflecting the hull door position:
+
 ```json
 { "Target": "YACHT NAME", "Info": "UD SB", "State": "ON" }
 { "Target": "YACHT NAME", "Info": "HULL DOOR CLOSED", "State": "ON" }
-````
+```
 
 ---
 
