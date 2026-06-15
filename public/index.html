@@ -1,0 +1,718 @@
+<!doctype html>
+<html>
+  <head>
+    <title>DMX-PC Live State</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const COLOUR_MAPPINGS = [
+        { index: 1, name: "Red", hex: "#FF0000" },
+        { index: 2, name: "Green", hex: "#00FF00" },
+        { index: 3, name: "Blue", hex: "#0000FF" },
+        { index: 4, name: "Yellow", hex: "#FFFF00" },
+        { index: 5, name: "Cyan", hex: "#00FFFF" },
+        { index: 6, name: "Magenta", hex: "#FF00FF" },
+        { index: 7, name: "White", hex: "#FFFFFF" },
+        { index: 8, name: "Orange", hex: "#FFA500" },
+        { index: 9, name: "Purple", hex: "#800080" },
+        { index: 10, name: "Pink", hex: "#FFC0CB" },
+        { index: 11, name: "Lime", hex: "#00FF00" },
+        { index: 12, name: "Teal", hex: "#008080" },
+        { index: 13, name: "Lavender", hex: "#E6E6FA" },
+        { index: 14, name: "Turquoise", hex: "#40E0D0" },
+      ];
+
+      const COLOUR_LOOKUP = Object.fromEntries(
+        COLOUR_MAPPINGS.map((c) => [c.index, c]),
+      );
+
+      const SUBZONE_COUNT = 4;
+
+      const COLOUR_INTENSITY_TARGETS = [
+        "POOL",
+        "WHIRLPOOL",
+        "YACHT NAME",
+        "UNDERWATER ALL",
+        "SUN DECK EXTERIOR FWD",
+        "MAIN DECK EXTERIOR AFT",
+        "LOWER DECK WET AREA",
+      ];
+
+      const STATUS_TARGETS = ["FIRE ALARM", "HULL DOOR", "VESSEL"];
+      const EVENT_MODE_TARGETS = [
+        "EVENT MODE SD",
+        "EVENT MODE MD",
+        "EVENT MODE LD",
+        "EVENT MODE UW",
+      ];
+    </script>
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+
+      :root {
+        --bg: #0e0e0e;
+        --text: #e0e0e0;
+        --text-dim: #888;
+        --text-muted: #666;
+        --text-faint: #555;
+        --divider: #222;
+        --card-bg: #1a1a1a;
+        --card-border: #2a2a2a;
+        --card-border-alt: #242424;
+        --slot-bg: #111;
+        --slot-border: #222;
+        --slot-label: #444;
+        --track-bg: #1e1e1e;
+        --log-bg: #141414;
+        --log-divider: #1a1a1a;
+        --log-time: #383838;
+        --badge-off-bg: #222;
+        --badge-off-text: #555;
+        --on-bg: #1a2e1a; --on-border: #2a5a2a; --on-strong: #7acc7a;
+        --dim-bg: #2a2a1a; --dim-border: #555522; --dim-strong: #aaaa55;
+        --night-bg: #1a1e2e; --night-border: #2a3a5a; --night-strong: #6688cc;
+      }
+
+      :root[data-theme="light"] {
+        --bg: #f0f2f5;
+        --text: #1a1a1a;
+        --text-dim: #666;
+        --text-muted: #888;
+        --text-faint: #aaa;
+        --divider: #ddd;
+        --card-bg: #ffffff;
+        --card-border: #e0e0e0;
+        --card-border-alt: #e5e5e5;
+        --slot-bg: #f5f5f5;
+        --slot-border: #e8e8e8;
+        --slot-label: #bbb;
+        --track-bg: #e8e8e8;
+        --log-bg: #ffffff;
+        --log-divider: #f0f0f0;
+        --log-time: #ccc;
+        --badge-off-bg: #f0f0f0;
+        --badge-off-text: #bbb;
+        --on-bg: #e8f5e8; --on-border: #88cc88; --on-strong: #2a7a2a;
+        --dim-bg: #f5f5de; --dim-border: #aaaa44; --dim-strong: #777700;
+        --night-bg: #eaecf8; --night-border: #8899cc; --night-strong: #3355aa;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      .theme-toggle {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-dim);
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
+      }
+
+      .theme-toggle:hover {
+        color: var(--text);
+        border-color: var(--text-dim);
+      }
+
+      /* ── Section ─────────────────────────────────────── */
+
+      .section {
+        margin-bottom: 28px;
+      }
+
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--divider);
+      }
+
+      /* ── Status indicators ───────────────────────────── */
+
+      #status-grid {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .status-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        min-width: 180px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--slot-label);
+      }
+
+      .status-card .status-name {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        flex: 1;
+      }
+
+      .status-card .status-value {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      /* Fire alarm states */
+      .status-card.alarm-silent { background: var(--card-bg); border-color: var(--card-border); }
+      .status-card.alarm-silent .status-dot { background: #3a9a3a; box-shadow: 0 0 4px #3a9a3a; }
+      .status-card.alarm-silent .status-value { color: #5a9a5a; }
+
+      .status-card.alarm-sounding { background: #2a0a0a; border-color: #880000; }
+      .status-card.alarm-sounding .status-dot {
+        background: #ff3333;
+        box-shadow: 0 0 8px #ff3333;
+        animation: flash-alarm 1.4s ease-in-out infinite;
+      }
+      .status-card.alarm-sounding .status-value { color: #ff5555; }
+
+      @keyframes flash-alarm {
+        0%, 100% { opacity: 1; box-shadow: 0 0 8px #ff3333; }
+        50%       { opacity: 0.1; box-shadow: none; }
+      }
+
+      /* Hull door states */
+      .status-card.door-closed { background: var(--card-bg); border-color: var(--card-border); }
+      .status-card.door-closed .status-dot { background: #2a6a2a; }
+      .status-card.door-closed .status-value { color: #5a9a5a; }
+
+      .status-card.door-open { background: #2a2000; border-color: #997700; }
+      .status-card.door-open .status-dot { background: #ddaa00; }
+      .status-card.door-open .status-value { color: #ffcc22; }
+
+      /* Generic status */
+      .status-card.status-on { background: var(--on-bg); border-color: var(--on-border); }
+      .status-card.status-on .status-dot { background: #3a9a3a; }
+      .status-card.status-on .status-value { color: var(--on-strong); }
+
+      .status-card.status-off { background: var(--card-bg); border-color: var(--card-border); }
+      .status-card.status-off .status-dot { background: var(--slot-label); }
+      .status-card.status-off .status-value { color: var(--text-muted); }
+
+      /* Vessel scene states */
+      .status-card.vessel-dim { background: var(--dim-bg); border-color: var(--dim-border); }
+      .status-card.vessel-dim .status-dot { background: var(--dim-strong); }
+      .status-card.vessel-dim .status-value { color: var(--dim-strong); }
+
+      .status-card.vessel-night { background: var(--night-bg); border-color: var(--night-border); }
+      .status-card.vessel-night .status-dot { background: var(--night-strong); }
+      .status-card.vessel-night .status-value { color: var(--night-strong); }
+
+      /* ── Event mode strip ────────────────────────────── */
+
+      #event-mode-grid {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .event-card {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 6px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        min-width: 130px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .event-card .event-zone {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        flex: 1;
+      }
+
+      .event-badge {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 2px 7px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      .event-card.event-off { background: var(--card-bg); border-color: var(--card-border); }
+      .event-card.event-off .event-badge { background: var(--badge-off-bg); color: var(--badge-off-text); }
+
+      .event-card.event-on { background: #2a2000; border-color: #997700; }
+      .event-card.event-on .event-zone { color: #cca020; }
+      .event-card.event-on .event-badge { background: #443300; color: #ffcc22; }
+
+      /* ── Lighting grid ───────────────────────────────── */
+
+      #lighting-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 8px;
+      }
+
+      .card {
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border-alt);
+        font-size: 11px;
+        line-height: 1.5;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .card strong {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+
+      .card .card-detail { color: var(--text-muted); }
+
+      .card.on  { background: var(--on-bg);   border-color: var(--on-border); }
+      .card.on strong { color: var(--on-strong); }
+
+      .card.off { background: var(--card-bg); border-color: var(--card-border-alt); }
+      .card.off strong { color: var(--text-faint); }
+
+      .card.dim  { background: var(--dim-bg);   border-color: var(--dim-border); }
+      .card.dim strong { color: var(--dim-strong); }
+
+      .card.night { background: var(--night-bg); border-color: var(--night-border); }
+      .card.night strong { color: var(--night-strong); }
+
+      .colour-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 5px;
+        border: 1px solid rgba(0,0,0,0.4);
+        vertical-align: middle;
+      }
+
+      /* ── Subzone strip ───────────────────────────────── */
+
+      .subzone-strip {
+        display: flex;
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .subzone-slot {
+        flex: 1;
+        border-radius: 4px;
+        padding: 4px 4px 3px;
+        background: var(--slot-bg);
+        border: 1px solid var(--slot-border);
+        text-align: center;
+      }
+
+      .subzone-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--slot-label);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .subzone-swatch {
+        display: block;
+        width: 100%;
+        height: 14px;
+        border-radius: 3px;
+        background: var(--track-bg);
+        border: 1px solid var(--slot-border);
+      }
+
+      .subzone-slot.has-colour .subzone-label { color: var(--text-muted); }
+      .subzone-slot.has-colour .subzone-swatch { border-color: rgba(0,0,0,0.3); }
+
+      /* ── Intensity strip ─────────────────────────────── */
+
+      .intensity-strip {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .intensity-slot {
+        flex: 1;
+        border-radius: 4px;
+        padding: 4px 4px 3px;
+        background: var(--slot-bg);
+        border: 1px solid var(--slot-border);
+        text-align: center;
+      }
+
+      .intensity-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--slot-label);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .intensity-bar-track {
+        width: 100%;
+        height: 6px;
+        background: var(--track-bg);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 3px;
+      }
+
+      .intensity-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: #4a7a4a;
+        transition: width 0.2s;
+      }
+
+      .intensity-value {
+        font-size: 9px;
+        color: var(--slot-label);
+        display: block;
+      }
+
+      .intensity-slot.has-intensity .intensity-label { color: var(--text-muted); }
+      .intensity-slot.has-intensity .intensity-bar-fill { background: #5acc5a; }
+      .intensity-slot.has-intensity .intensity-value { color: var(--text-dim); }
+
+      /* ── Row labels ──────────────────────────────────── */
+
+      .row-label {
+        grid-column: 1 / -1;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--slot-label);
+        padding: 8px 0 4px;
+        border-bottom: 1px solid var(--divider);
+        margin-top: 4px;
+      }
+
+      .row-label:first-child { margin-top: 0; }
+
+      /* ── Logs ────────────────────────────────────────── */
+
+      #logs {
+        background: var(--log-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-family: monospace;
+        font-size: 11px;
+        height: 180px;
+        overflow-y: auto;
+      }
+
+      .log-entry {
+        padding: 2px 0;
+        border-bottom: 1px solid var(--log-divider);
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .log-entry:last-child { border-bottom: none; }
+
+      .log-entry .log-time {
+        color: var(--log-time);
+        margin-right: 8px;
+        user-select: none;
+      }
+
+      .log-entry .log-msg { color: var(--text-dim); }
+
+      .log-entry.warn .log-msg { color: #cc8800; }
+    </style>
+  </head>
+  <body>
+    <div class="page-header">
+      <h1>DMX-PC Live State</h1>
+      <button class="theme-toggle" id="theme-toggle"></button>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Status</div>
+      <div id="status-grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Event Mode</div>
+      <div id="event-mode-grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Lighting</div>
+      <div id="lighting-grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Logs</div>
+      <div id="logs"></div>
+    </div>
+
+    <script>
+      const themeToggle = document.getElementById("theme-toggle");
+
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.textContent = theme === "light" ? "Dark" : "Light";
+        localStorage.setItem("theme", theme);
+      }
+
+      applyTheme(localStorage.getItem("theme") || "dark");
+
+      themeToggle.addEventListener("click", () => {
+        applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+      });
+
+      const socket = io();
+      const stateMap = {};
+
+      const statusGrid    = document.getElementById("status-grid");
+      const eventGrid     = document.getElementById("event-mode-grid");
+      const lightingGrid  = document.getElementById("lighting-grid");
+      const logsEl        = document.getElementById("logs");
+
+      /* ── State class helpers ─────────────────────────── */
+
+      function lightingClass(state) {
+        if (!state) return "off";
+        const s = state.toLowerCase();
+        if (s === "on")    return "on";
+        if (s === "dim")   return "dim";
+        if (s === "night") return "night";
+        return "off";
+      }
+
+      function statusCardClass(target, state, scene) {
+        if (target === "FIRE ALARM") {
+          return state === "SOUNDING" ? "alarm-sounding" : "alarm-silent";
+        }
+        if (target === "HULL DOOR") {
+          return state === "OPEN" ? "door-open" : "door-closed";
+        }
+        if (target === "VESSEL") {
+          const s = (scene || "").toUpperCase();
+          if (s === "DIM")   return "vessel-dim";
+          if (s === "NIGHT") return "vessel-night";
+          if (s === "ON")    return "status-on";
+          return "status-off";
+        }
+        const s = (state || "").toLowerCase();
+        return s === "on" ? "status-on" : "status-off";
+      }
+
+      /* ── Render helpers ──────────────────────────────── */
+
+      function renderStatus(items) {
+        statusGrid.innerHTML = "";
+        items.forEach((item) => {
+          const displayValue = item.Target === "VESSEL"
+            ? (item.Scene || item.State || "—")
+            : (item.State || "—");
+          const div = document.createElement("div");
+          div.className = "status-card " + statusCardClass(item.Target, item.State, item.Scene);
+          div.innerHTML = `
+            <div class="status-dot"></div>
+            <span class="status-name">${item.Target}</span>
+            <span class="status-value">${displayValue}</span>
+          `;
+          statusGrid.appendChild(div);
+        });
+      }
+
+      function renderEventMode(items) {
+        eventGrid.innerHTML = "";
+        const zoneLabel = (t) => t.replace("EVENT MODE ", "");
+        items.forEach((item) => {
+          const on = item.State === "ON";
+          const div = document.createElement("div");
+          div.className = "event-card " + (on ? "event-on" : "event-off");
+          div.innerHTML = `
+            <span class="event-zone">${zoneLabel(item.Target)}</span>
+            <span class="event-badge">${item.State || "—"}</span>
+          `;
+          eventGrid.appendChild(div);
+        });
+      }
+
+      function intensityStripHTML(intensities) {
+        let html = '<div class="intensity-strip">';
+        for (let i = 1; i <= SUBZONE_COUNT; i++) {
+          const val = intensities[i];
+          const pct = (val !== "" && val !== undefined) ? parseInt(val, 10) : null;
+          const hasIntensity = pct !== null && pct > 0;
+          html += `
+            <div class="intensity-slot${hasIntensity ? " has-intensity" : ""}" title="Subzone ${i}: ${pct !== null ? pct + "%" : "—"}">
+              <span class="intensity-label">${i}</span>
+              <div class="intensity-bar-track">
+                <div class="intensity-bar-fill" style="width:${pct !== null ? pct : 0}%"></div>
+              </div>
+              <span class="intensity-value">${pct !== null ? pct + "%" : "—"}</span>
+            </div>`;
+        }
+        html += "</div>";
+        return html;
+      }
+
+      function subzoneStripHTML(colours) {
+        let html = '<div class="subzone-strip">';
+        for (let i = 1; i <= SUBZONE_COUNT; i++) {
+          const idx = colours[i];
+          const c = idx ? COLOUR_LOOKUP[idx] : null;
+          const hasColour = !!c;
+          const swatchStyle = c ? `background:${c.hex}` : "";
+          const title = c ? c.name : "—";
+          html += `
+            <div class="subzone-slot${hasColour ? " has-colour" : ""}" title="Subzone ${i}: ${title}">
+              <span class="subzone-label">${i}</span>
+              <span class="subzone-swatch" style="${swatchStyle}"></span>
+            </div>`;
+        }
+        html += "</div>";
+        return html;
+      }
+
+      function renderLighting(items) {
+        lightingGrid.innerHTML = "";
+
+        const UNDERWATER = (t) => t.startsWith("UNDERWATER");
+        const LOWER_DECK = (t) => t.startsWith("LOWER DECK");
+        const MAIN_DECK  = (t) => t.startsWith("MAIN DECK") || ["POOL", "YACHT NAME"].includes(t);
+        const SUN_DECK   = (t) => t.startsWith("SUN DECK") || t === "WHIRLPOOL";
+
+        const groups = [
+          { label: "Sun Deck",   test: SUN_DECK },
+          { label: "Main Deck",  test: MAIN_DECK },
+          { label: "Lower Deck", test: LOWER_DECK },
+          { label: "Underwater", test: UNDERWATER },
+        ];
+
+        groups.forEach(({ label, test }) => {
+          const groupItems = items.filter((i) => test(i.Target));
+          if (!groupItems.length) return;
+
+          const header = document.createElement("div");
+          header.className = "row-label";
+          header.textContent = label;
+          lightingGrid.appendChild(header);
+
+          groupItems.forEach((item) => {
+            const hasSubzones = COLOUR_INTENSITY_TARGETS.includes(item.Target);
+            const coloursHTML   = hasSubzones && item.Colours     ? subzoneStripHTML(item.Colours) : "";
+            const intensityHTML = hasSubzones && item.Intensities ? intensityStripHTML(item.Intensities) : "";
+
+            const div = document.createElement("div");
+            div.className = "card " + lightingClass(item.State);
+            div.innerHTML = `
+              <strong>${item.Target}</strong>
+              ${item.Info  ? `<span class="card-detail">Info: ${item.Info}</span><br>` : ""}
+              ${item.State ? `<span class="card-detail">State: ${item.State}</span><br>` : ""}
+              ${item.Scene ? `<span class="card-detail">Scene: ${item.Scene}</span><br>` : ""}
+              ${coloursHTML}
+              ${intensityHTML}
+            `;
+            lightingGrid.appendChild(div);
+          });
+        });
+      }
+
+      /* ── Main render ─────────────────────────────────── */
+
+      function render() {
+        const all = Object.values(stateMap);
+
+        const statusItems    = STATUS_TARGETS.map((t) => stateMap[t]).filter(Boolean);
+        const eventItems     = EVENT_MODE_TARGETS.map((t) => stateMap[t]).filter(Boolean);
+        const lightingItems  = all.filter(
+          (i) => !STATUS_TARGETS.includes(i.Target) && !EVENT_MODE_TARGETS.includes(i.Target),
+        );
+
+        renderStatus(statusItems);
+        renderEventMode(eventItems);
+        renderLighting(lightingItems);
+      }
+
+      /* ── Socket handlers ─────────────────────────────── */
+
+      socket.on("state:all", (states) => {
+        states.forEach((s) => (stateMap[s.Target] = s));
+        render();
+      });
+
+      socket.on("state:update", (update) => {
+        stateMap[update.Target] = update;
+        render();
+      });
+
+      socket.on("log", ({ message, timestamp }) => {
+        const time = new Date(timestamp).toLocaleTimeString();
+        const entry = document.createElement("div");
+        entry.className = "log-entry" + (message.startsWith("WARN") ? " warn" : "");
+        entry.innerHTML = `<span class="log-time">${time}</span><span class="log-msg">${message}</span>`;
+        logsEl.appendChild(entry);
+        logsEl.scrollTop = logsEl.scrollHeight;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,248 @@
+[
+  {
+    "Target": "POOL",
+    "Info": "",
+    "State": "OFF",
+    "Scene": "",
+    "Colours": {
+      "1": 1,
+      "2": 2,
+      "3": 2,
+      "4": 2
+    },
+    "Intensities": {
+      "1": 100,
+      "2": 100,
+      "3": 100,
+      "4": 100
+    }
+  },
+  {
+    "Target": "WHIRLPOOL",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Colours": {
+      "1": 3,
+      "2": 3,
+      "3": 3,
+      "4": 3
+    },
+    "Intensities": {
+      "1": 100,
+      "2": 100,
+      "3": 100,
+      "4": 100
+    }
+  },
+  {
+    "Target": "YACHT NAME",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Colours": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Intensities": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Lights": {
+      "UD SB": "OFF",
+      "HULL DOOR": "OFF"
+    }
+  },
+  {
+    "Target": "UNDERWATER ALL",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Colours": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Intensities": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    }
+  },
+  {
+    "Target": "UNDERWATER STERN",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER AFT PS",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER AFT SB",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER MID PS",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER MID SB",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER FWD",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "UNDERWATER UP BOW",
+    "Info": "",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "SUN DECK FWD SPOTS",
+    "State": "ON",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "SUN DECK FWD STRIPS",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "MAIN DECK AFT SPOTS POOL AND TABLE",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "MAIN DECK AFT SPOTS",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "MAIN DECK AFT STRIPS",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "MAIN DECK COURTESY",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "SUN DECK EXTERIOR FWD",
+    "Info": "",
+    "State": "OFF",
+    "Scene": "",
+    "Colours": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Intensities": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    }
+  },
+  {
+    "Target": "MAIN DECK EXTERIOR AFT",
+    "Info": "",
+    "State": "OFF",
+    "Scene": "DIM",
+    "Colours": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Intensities": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    }
+  },
+  {
+    "Target": "LOWER DECK WET AREA",
+    "Info": "",
+    "State": "OFF",
+    "Scene": "",
+    "Colours": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    },
+    "Intensities": {
+      "1": "",
+      "2": "",
+      "3": "",
+      "4": ""
+    }
+  },
+  {
+    "Target": "VESSEL",
+    "Info": "",
+    "State": "OFF",
+    "Scene": "",
+    "Intensity": ""
+  },
+  {
+    "Target": "FIRE ALARM",
+    "State": "SILENT"
+  },
+  {
+    "Target": "HULL DOOR",
+    "State": "CLOSED"
+  },
+  {
+    "Target": "EVENT MODE MD",
+    "State": "OFF"
+  },
+  {
+    "Target": "EVENT MODE SD",
+    "State": "OFF"
+  },
+  {
+    "Target": "EVENT MODE LD",
+    "State": "ON"
+  },
+  {
+    "Target": "EVENT MODE UW",
+    "State": "ON"
+  }
+]
