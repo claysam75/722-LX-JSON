@@ -1101,6 +1101,7 @@ module.exports = {
     "SUN DECK EXTERIOR FWD",
     "MAIN DECK EXTERIOR AFT",
     "LOWER DECK WET AREA",
+    "LD DOOR SPOTS",
     "VESSEL",
   ],
 
@@ -1127,6 +1128,7 @@ module.exports = {
     "MAIN DECK COURTESY",
     "FIRE ALARM",
     "HULL DOOR",
+    "LD DOOR SPOTS",
   ],
 
   FEEDBACK_TARGETS: [
@@ -1147,6 +1149,7 @@ module.exports = {
     "MAIN DECK AFT SPOTS",
     "MAIN DECK AFT STRIPS",
     "MAIN DECK COURTESY",
+    "LD DOOR SPOTS",
   ],
 
   COLOUR_INTENSITY_TARGETS: [
@@ -1189,6 +1192,7 @@ module.exports = {
     "SUN DECK EXTERIOR FWD": "/SD EXTERIOR FWD*",
     "MAIN DECK EXTERIOR AFT": "/MD EXTERIOR AFT*",
     "LOWER DECK WET AREA": "/LD WET AREA*",
+    "LD DOOR SPOTS": "/LD DOOR SPOTS*",
     VESSEL: "/VESSEL*",
   },
 };

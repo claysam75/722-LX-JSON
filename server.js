@@ -34,6 +34,34 @@ function log(message) {
   io.emit("log", { message, timestamp: new Date().toISOString() });
 }
 
+function isLdWetAreaActive() {
+  const s = getState("LOWER DECK WET AREA");
+  if (!s) return false;
+  if (s.Scene && s.Scene !== "OFF") return true;
+  if (s.State === "ON") return true;
+  if (s.Colours && Object.values(s.Colours).some((v) => v !== "" && v != null))
+    return true;
+  return false;
+}
+
+function syncLdDoorSpots() {
+  const doorOpen = getState("HULL DOOR")?.State === "OPEN";
+  const shouldBeOn = doorOpen && isLdWetAreaActive();
+  const current = getState("LD DOOR SPOTS")?.State;
+
+  if (shouldBeOn && current !== "ON") {
+    setState("LD DOOR SPOTS", { State: "ON" });
+    sendOSC("/s/ld-door-sp/1", []);
+    log("OSC: LD door spots ON");
+    broadcastStateUpdate("LD DOOR SPOTS");
+  } else if (!shouldBeOn && current === "ON") {
+    setState("LD DOOR SPOTS", { State: "OFF" });
+    sendOSC("/s/ld-door-sp/0", []);
+    log("OSC: LD door spots OFF");
+    broadcastStateUpdate("LD DOOR SPOTS");
+  }
+}
+
 io.on("connection", (socket) => {
   log("New client connected");
   socket.emit("state:all", getAllStates());
@@ -291,6 +319,7 @@ app.post("/set", (req, res) => {
       return res.status(400).json({ error: "Invalid state" });
     }
     setState(Target, { State });
+    broadcastStateUpdate(Target);
     res.json({ Target, State });
     return;
   }
@@ -300,6 +329,7 @@ app.post("/set", (req, res) => {
       return res.status(400).json({ error: "Invalid state" });
     }
     setState(Target, { State });
+    broadcastStateUpdate(Target);
     res.json({ Target, State });
 
     const lights = { ...getState("YACHT NAME").Lights };
@@ -312,6 +342,8 @@ app.post("/set", (req, res) => {
         setState("YACHT NAME", { Lights: lights });
         broadcastStateUpdate("YACHT NAME");
       }
+
+      syncLdDoorSpots();
     } else {
       if (lights["UD SB"] === "ON" && lights["HULL DOOR"] !== "ON") {
         lights["HULL DOOR"] = "ON";
@@ -322,6 +354,8 @@ app.post("/set", (req, res) => {
         setState("YACHT NAME", { Lights: lights });
         broadcastStateUpdate("YACHT NAME");
       }
+
+      syncLdDoorSpots();
     }
     return;
   }
@@ -427,6 +461,15 @@ app.post("/set", (req, res) => {
         log("OSC: Main Deck Aft Courtesy OFF");
       }
       break;
+    case "LD DOOR SPOTS":
+      if (State == "ON") {
+        sendOSC("/s/ld-door-sp/1");
+        log("OSC: LD Door Spots ON");
+      } else {
+        sendOSC("/s/ld-door-sp/0");
+        log("OSC: LD Door Spots OFF");
+      }
+      break;
     default:
       log(`WARN: No OSC mapping for toggle target: ${Target}`);
   }
@@ -474,6 +517,8 @@ app.post("/colour", (req, res) => {
 
   broadcastStateUpdate(Target);
 
+  if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
+
   const zonesToSend =
     subzoneNum === 0
       ? Array.from({ length: SUBZONE_COUNT }, (_, i) => i + 1)
@@ -482,6 +527,10 @@ app.post("/colour", (req, res) => {
   for (const zone of zonesToSend) {
     const oscAddress = COLOUR_OSC_MAPPINGS[Target]?.[zone]?.[Colour];
     if (oscAddress) {
+      if (existing[zone] == Colour) {
+        sendOSC(oscAddress, []);
+        log(`OSC: ${Target} zone ${zone} colour ${Colour} deactivate → ${oscAddress}`);
+      }
       sendOSC(oscAddress, []);
       log(`OSC: ${Target} zone ${zone} colour ${Colour} → ${oscAddress}`);
     } else {
@@ -539,6 +588,8 @@ app.post("/intensity", (req, res) => {
 
   broadcastStateUpdate(Target);
 
+  if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
+
   const intensityZonesToSend =
     subzoneNum === 0
       ? Array.from({ length: SUBZONE_COUNT }, (_, i) => i + 1)
@@ -547,6 +598,10 @@ app.post("/intensity", (req, res) => {
   for (const zone of intensityZonesToSend) {
     const oscAddress = INTENSITY_OSC_MAPPINGS[Target]?.[zone]?.[Intensity];
     if (oscAddress) {
+      if (existing[zone] == Intensity) {
+        sendOSC(oscAddress, []);
+        log(`OSC: ${Target} zone ${zone} intensity ${Intensity} deactivate → ${oscAddress}`);
+      }
       sendOSC(oscAddress, []);
       log(`OSC: ${Target} zone ${zone} intensity ${Intensity} → ${oscAddress}`);
     } else {
@@ -614,7 +669,7 @@ app.post("/scene", (req, res) => {
         log("OSC: Main Deck Exterior Aft Scene OFF");
       }
       break;
-    case "LOWER DECK WET AREA":
+    case "LOWER DECK WET AREA": {
       if (Scene === "ON") {
         sendOSC("/exec/10/15", []);
         log("OSC: Lower Deck Wet Area Scene ON");
@@ -628,7 +683,10 @@ app.post("/scene", (req, res) => {
         sendOSC("/exec/10/12", []);
         log("OSC: Lower Deck Wet Area Scene OFF");
       }
+
+      syncLdDoorSpots();
       break;
+    }
     case "VESSEL":
       if (Scene === "ON") {
         sendOSC("/exec/10/20", []);
