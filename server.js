@@ -107,6 +107,7 @@ app.get("/state", (req, res) => {
 });
 
 app.post("/eventmode", (req, res) => {
+  console.log(req.body);
   const { Target, State = "" } = req.body;
   log(`Event mode request: ${Target} → ${State}`);
 
@@ -529,7 +530,9 @@ app.post("/colour", (req, res) => {
     if (oscAddress) {
       if (existing[zone] == Colour) {
         sendOSC(oscAddress, []);
-        log(`OSC: ${Target} zone ${zone} colour ${Colour} deactivate → ${oscAddress}`);
+        log(
+          `OSC: ${Target} zone ${zone} colour ${Colour} deactivate → ${oscAddress}`,
+        );
       }
       sendOSC(oscAddress, []);
       log(`OSC: ${Target} zone ${zone} colour ${Colour} → ${oscAddress}`);
@@ -600,7 +603,9 @@ app.post("/intensity", (req, res) => {
     if (oscAddress) {
       if (existing[zone] == Intensity) {
         sendOSC(oscAddress, []);
-        log(`OSC: ${Target} zone ${zone} intensity ${Intensity} deactivate → ${oscAddress}`);
+        log(
+          `OSC: ${Target} zone ${zone} intensity ${Intensity} deactivate → ${oscAddress}`,
+        );
       }
       sendOSC(oscAddress, []);
       log(`OSC: ${Target} zone ${zone} intensity ${Intensity} → ${oscAddress}`);
