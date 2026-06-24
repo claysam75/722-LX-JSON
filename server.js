@@ -194,6 +194,10 @@ app.post("/toggle", (req, res) => {
     sendOSC(turningOn ? "/t/name/aft/1" : "/t/name/aft/0", []);
     log(`OSC: yacht name ${turningOn ? "ON" : "OFF"} (all names)`);
 
+    light["GUEST ENTRANCE"] = turningOn ? "ON" : "OFF";
+    sendOSC(turningOn ? "/t/name/guest/1" : "/t/name/guest/0", []);
+    log(`OSC: yacht name ${turningOn ? "ON" : "OFF"} (guest entrance)`);
+
     setState("YACHT NAME", { Lights: lights });
     broadcastStateUpdate("YACHT NAME");
     return res.json({ Target, State: lights["UD SB"], Info });
