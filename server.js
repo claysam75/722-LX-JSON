@@ -496,10 +496,7 @@ app.post("/colour", (req, res) => {
 
   if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
 
-  const zonesToSend =
-    subzoneNum === 0
-      ? Array.from({ length: SUBZONE_COUNT }, (_, i) => i + 1)
-      : [subzoneNum];
+  const zonesToSend = [subzoneNum === 0 ? 0 : subzoneNum];
 
   for (const zone of zonesToSend) {
     const oscAddress = COLOUR_OSC_MAPPINGS[Target]?.[zone]?.[Colour];
@@ -569,10 +566,7 @@ app.post("/intensity", (req, res) => {
 
   if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
 
-  const intensityZonesToSend =
-    subzoneNum === 0
-      ? Array.from({ length: SUBZONE_COUNT }, (_, i) => i + 1)
-      : [subzoneNum];
+  const intensityZonesToSend = [subzoneNum === 0 ? 0 : subzoneNum];
 
   for (const zone of intensityZonesToSend) {
     const oscAddress = INTENSITY_OSC_MAPPINGS[Target]?.[zone]?.[Intensity];

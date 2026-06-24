@@ -770,7 +770,7 @@
             <td>HULL DOOR</td>
             <td>OPEN / CLOSED</td>
             <td colspan="2">→ <a href="#hulldoor">Hull Door Logic</a></td>
-            <td>Affects YACHT NAME lights + LD DOOR SPOTS</td>
+            <td>Triggers GUEST ENTRANCE name light</td>
             <td>
               <button
                 class="btn btn-open"
@@ -791,9 +791,10 @@
 
       <h3>YACHT NAME — direct light control</h3>
       <div class="note">
-        Use <code>Info: "UD SB"</code> for the underwater SB light. Omit Info
-        for the hull door light. Hull door light ON is silently ignored while
-        the door is OPEN.
+        Use <code>Info: "UD SB"</code> for the upper deck stbd name light.
+        Omit Info (or use <code>Info: "HULL DOOR"</code>) for the aft name
+        light. The GUEST ENTRANCE light is driven automatically by the hull door
+        signal and has no direct set handler.
       </div>
       <table>
         <thead>
@@ -1332,21 +1333,19 @@
     <section id="hulldoor">
       <h2>Hull Door Logic</h2>
       <div class="note">
-        Set via <code>POST /set · HULL DOOR · State: OPEN or CLOSED</code>. Two
-        side effects: may toggle the YACHT NAME hull-door light, and always
-        calls <a href="#ldspots">syncLdDoorSpots</a>.
+        Set via <code>POST /set · HULL DOOR · State: OPEN or CLOSED</code>.
+        Controls the GUEST ENTRANCE name light: ON when the side guest entrance
+        door opens, OFF when it closes.
       </div>
       <div class="diagram-wrap">
         <div class="mermaid">
-          flowchart TD A["POST /set · HULL DOOR"] --> B{State valid?} B -->|no|
-          ERR["400 error"] B -->|yes| SAVE["setState: HULL DOOR = State"] SAVE
-          --> BRANCH{State?} BRANCH -->|OPEN| OPCHK{"YACHT NAME\nlights.HULL
-          DOOR == ON?"} OPCHK -->|yes| OPOFF["lights.HULL DOOR = OFF\nOSC →
-          /t/name/aft/0"] OPCHK -->|no| OPSYNC["syncLdDoorSpots()"] OPOFF -->
-          OPSYNC BRANCH -->|CLOSED| CLCHK{"YACHT NAME lights:\nUD SB == ON\nAND
-          HULL DOOR != ON?"} CLCHK -->|yes| CLON["lights.HULL DOOR = ON\nOSC →
-          /t/name/aft/1"] CLCHK -->|no| CLSYNC["syncLdDoorSpots()"] CLON -->
-          CLSYNC
+flowchart TD
+  A["POST /set · HULL DOOR"] --> B{State valid?}
+  B -->|no| ERR["400 error"]
+  B -->|yes| SAVE["setState: HULL DOOR = State"]
+  SAVE --> BRANCH{State?}
+  BRANCH -->|OPEN| GSTON["lights.GUEST ENTRANCE = ON\nOSC → /exec/2/38\nsetState YACHT NAME · broadcast"]
+  BRANCH -->|CLOSED| GSTOFF["lights.GUEST ENTRANCE = OFF\nOSC → /exec/2/37\nsetState YACHT NAME · broadcast"]
         </div>
       </div>
     </section>
@@ -1355,40 +1354,36 @@
     <section id="yachtname">
       <h2>Yacht Name Logic</h2>
       <div class="note">
-        Two independent light groups: <strong>UD SB</strong> (underwater
-        starboard side — always follows toggle) and
-        <strong>HULL DOOR light</strong> (inner door surface — only ON when door
-        is CLOSED).
+        Three light groups: <strong>UD SB</strong> (upper deck stbd name),
+        <strong>HULL DOOR</strong> (aft name — follows toggle), and
+        <strong>GUEST ENTRANCE</strong> (side guest entrance name — driven
+        automatically by the hull door sensor, see
+        <a href="#hulldoor">Hull Door Logic</a>).
       </div>
 
       <h3>POST /toggle · YACHT NAME</h3>
       <div class="diagram-wrap">
         <div class="mermaid">
-          flowchart TD A["POST /toggle · YACHT NAME"] --> B{"lights.UD SB ==
-          ON?\n(currently on = will turn off)"} B -->|"turning OFF"|
-          OFF1["lights.UD SB = OFF\nOSC → /t/name/side/0"] OFF1 -->
-          OFF2["lights.HULL DOOR = OFF\nOSC → /t/name/aft/0"] OFF2 -->
-          SAVE1["setState YACHT NAME · broadcast"] B -->|"turning ON"|
-          DCHK{"Hull door\n== CLOSED?"} DCHK -->|yes| ON_BOTH["lights.UD SB =
-          ON\nOSC → /t/name/side/1\nlights.HULL DOOR = ON\nOSC → /t/name/aft/1"]
-          DCHK -->|"no (OPEN)"| ON_SIDE["lights.UD SB = ON\nOSC →
-          /t/name/side/1\n(hull door light unchanged)"] ON_BOTH -->
-          SAVE2["setState YACHT NAME · broadcast"] ON_SIDE --> SAVE2
+flowchart TD
+  A["POST /toggle · YACHT NAME"] --> B{"lights.UD SB == ON?"}
+  B -->|"turning OFF"| OFF["lights.UD SB = OFF\nOSC → /t/name/side/0\nlights.HULL DOOR = OFF\nOSC → /t/name/aft/0"]
+  B -->|"turning ON"| ON["lights.UD SB = ON\nOSC → /t/name/side/1\nlights.HULL DOOR = ON\nOSC → /t/name/aft/1"]
+  OFF --> SAVE["setState YACHT NAME · broadcast"]
+  ON --> SAVE
         </div>
       </div>
 
       <h3>POST /set · YACHT NAME</h3>
       <div class="diagram-wrap">
         <div class="mermaid">
-          flowchart TD A["POST /set · YACHT NAME\nState: ON or OFF\nInfo: UD SB
-          (or omit for hull door light)"] --> B{"Info == 'UD SB'?"} B -->|yes|
-          UDK["lightKey = UD SB"] B -->|"no (or blank)"| HDK["lightKey = HULL
-          DOOR light"] HDK --> GUARD{"State == ON\nAND hull door is OPEN?"}
-          GUARD -->|yes| IGN["Ignored — hull door light\ncannot be ON while door
-          is OPEN\n(returns current state)"] GUARD -->|no| HDO["lights.HULL DOOR
-          = State\nOSC → /t/name/aft/0 or 1"] UDK --> UDO["lights.UD SB =
-          State\nOSC → /t/name/side/0 or 1"] HDO --> DONE["setState YACHT NAME ·
-          broadcast"] UDO --> DONE
+flowchart TD
+  A["POST /set · YACHT NAME\nState: ON or OFF\nInfo: UD SB or HULL DOOR"] --> B{"Info == 'UD SB'?"}
+  B -->|yes| UDK["lightKey = UD SB"]
+  B -->|"no (or blank)"| HDK["lightKey = HULL DOOR"]
+  UDK --> UDO["lights.UD SB = State\nOSC → /t/name/side/0 or 1"]
+  HDK --> HDO["lights.HULL DOOR = State\nOSC → /t/name/aft/0 or 1"]
+  UDO --> DONE["setState YACHT NAME · broadcast"]
+  HDO --> DONE
         </div>
       </div>
     </section>
@@ -1403,8 +1398,6 @@
 
       <p><strong>syncLdDoorSpots() is called whenever:</strong></p>
       <div class="trigger-list">
-        <span>HULL DOOR → OPEN</span>
-        <span>HULL DOOR → CLOSED</span>
         <span>POST /scene · LOWER DECK WET AREA</span>
         <span>POST /colour · LOWER DECK WET AREA</span>
         <span>POST /intensity · LOWER DECK WET AREA</span>
@@ -1412,16 +1405,18 @@
 
       <div class="diagram-wrap">
         <div class="mermaid">
-          flowchart TD SYNC["syncLdDoorSpots()"] --> DOOR{"HULL DOOR\n== OPEN?"}
-          DOOR -->|no| OFF_PATH["shouldBeOn = false"] DOOR -->|yes|
-          LDCHK{"isLdWetAreaActive?\n──────────────────\nScene = ON, DIM, or
-          NIGHT\nOR State = ON (intensity > 0)\nOR any Colour subzone set"}
-          LDCHK -->|yes| ON_PATH["shouldBeOn = true"] LDCHK -->|no| OFF_PATH
-          ON_PATH --> SON{"LD DOOR SPOTS\nalready ON?"} SON -->|yes| NOP1["no
-          change"] SON -->|no| TURNON["setState: ON\nOSC →
-          /s/ld-door-sp/1\nbroadcast"] OFF_PATH --> SOFF{"LD DOOR SPOTS\nalready
-          OFF?"} SOFF -->|yes| NOP2["no change"] SOFF -->|no| TURNOFF["setState:
-          OFF\nOSC → /s/ld-door-sp/0\nbroadcast"]
+flowchart TD
+  SYNC["syncLdDoorSpots()"] --> DOOR{"HULL DOOR == OPEN?"}
+  DOOR -->|no| OFF_PATH["shouldBeOn = false"]
+  DOOR -->|yes| LDCHK{"isLdWetAreaActive?\nScene = ON/DIM/NIGHT\nOR State = ON\nOR any Colour subzone set"}
+  LDCHK -->|yes| ON_PATH["shouldBeOn = true"]
+  LDCHK -->|no| OFF_PATH
+  ON_PATH --> SON{"LD DOOR SPOTS already ON?"}
+  SON -->|yes| NOP1["no change"]
+  SON -->|no| TURNON["setState: ON\nOSC → /s/ld-door-sp/1\nbroadcast"]
+  OFF_PATH --> SOFF{"LD DOOR SPOTS already OFF?"}
+  SOFF -->|yes| NOP2["no change"]
+  SOFF -->|no| TURNOFF["setState: OFF\nOSC → /s/ld-door-sp/0\nbroadcast"]
         </div>
       </div>
 
@@ -1492,8 +1487,9 @@
               if (s.Target === "YACHT NAME") {
                 const ud = (s.Lights || {})["UD SB"] || "OFF";
                 const hd = (s.Lights || {})["HULL DOOR"] || "OFF";
-                detail = `UD:${ud} HD:${hd}`;
-                cls = ud === "ON" || hd === "ON" ? "chip-on" : "chip-off";
+                const ge = (s.Lights || {})["GUEST ENTRANCE"] || "OFF";
+                detail = `UD:${ud} HD:${hd} GE:${ge}`;
+                cls = ud === "ON" || hd === "ON" || ge === "ON" ? "chip-on" : "chip-off";
               } else if (s.Target === "HULL DOOR") {
                 detail = s.State;
                 cls = s.State === "OPEN" ? "chip-open" : "chip-closed";
