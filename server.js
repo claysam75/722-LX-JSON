@@ -505,7 +505,7 @@ app.post("/colour", (req, res) => {
   for (const zone of zonesToSend) {
     const oscAddress = COLOUR_OSC_MAPPINGS[Target]?.[zone]?.[Colour];
     if (oscAddress) {
-      if (existing[zone] == Colour) {
+      if (existing[zone === 0 ? 1 : zone] == Colour) {
         sendOSC(oscAddress, []);
         log(
           `OSC: ${Target} zone ${zone} colour ${Colour} deactivate → ${oscAddress}`,
@@ -575,7 +575,7 @@ app.post("/intensity", (req, res) => {
   for (const zone of intensityZonesToSend) {
     const oscAddress = INTENSITY_OSC_MAPPINGS[Target]?.[zone]?.[Intensity];
     if (oscAddress) {
-      if (existing[zone] == Intensity) {
+      if (existing[zone === 0 ? 1 : zone] == Intensity) {
         sendOSC(oscAddress, []);
         log(
           `OSC: ${Target} zone ${zone} intensity ${Intensity} deactivate → ${oscAddress}`,
