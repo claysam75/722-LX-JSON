@@ -85,6 +85,11 @@ function buildFeedbackPayloads(target) {
         Info: `HULL DOOR ${hullDoorState}`,
         State: lights["HULL DOOR"] || "OFF",
       },
+      {
+        Target: "YACHT NAME",
+        Info: "GUEST ENTRANCE",
+        State: lights["GUEST ENTRANCE"] || "OFF",
+      },
     ];
   }
 
@@ -181,22 +186,13 @@ app.post("/toggle", (req, res) => {
   if (Target === "YACHT NAME") {
     const lights = { ...getState("YACHT NAME").Lights };
     const turningOn = lights["UD SB"] !== "ON";
-    const doorClosed = getState("HULL DOOR")?.State === "CLOSED";
 
     lights["UD SB"] = turningOn ? "ON" : "OFF";
     sendOSC(turningOn ? "/t/name/side/1" : "/t/name/side/0", []);
 
-    if (turningOn && doorClosed) {
-      lights["HULL DOOR"] = "ON";
-      sendOSC("/t/name/aft/1", []);
-      log("OSC: yacht name ON (all names, hull door closed)");
-    } else if (turningOn) {
-      log("OSC: yacht name ON (UD SB only, hull door open)");
-    } else {
-      lights["HULL DOOR"] = "OFF";
-      sendOSC("/t/name/aft/0", []);
-      log("OSC: yacht name OFF (all names)");
-    }
+    lights["HULL DOOR"] = turningOn ? "ON" : "OFF";
+    sendOSC(turningOn ? "/t/name/aft/1" : "/t/name/aft/0", []);
+    log(`OSC: yacht name ${turningOn ? "ON" : "OFF"} (all names)`);
 
     setState("YACHT NAME", { Lights: lights });
     broadcastStateUpdate("YACHT NAME");
@@ -336,28 +332,17 @@ app.post("/set", (req, res) => {
     const lights = { ...getState("YACHT NAME").Lights };
 
     if (State === "OPEN") {
-      if (lights["HULL DOOR"] === "ON") {
-        lights["HULL DOOR"] = "OFF";
-        sendOSC("/t/name/aft/0", []);
-        log("OSC: yacht name hull-door light OFF (hull door opened)");
-        setState("YACHT NAME", { Lights: lights });
-        broadcastStateUpdate("YACHT NAME");
-      }
-
-      syncLdDoorSpots();
+      lights["GUEST ENTRANCE"] = "ON";
+      sendOSC("/exec/2/38", []);
+      log("OSC: guest entrance name light ON (hull door opened)");
     } else {
-      if (lights["UD SB"] === "ON" && lights["HULL DOOR"] !== "ON") {
-        lights["HULL DOOR"] = "ON";
-        sendOSC("/t/name/aft/1", []);
-        log(
-          "OSC: yacht name hull-door light restored ON (hull door closed, UD SB on)",
-        );
-        setState("YACHT NAME", { Lights: lights });
-        broadcastStateUpdate("YACHT NAME");
-      }
-
-      syncLdDoorSpots();
+      lights["GUEST ENTRANCE"] = "OFF";
+      sendOSC("/exec/2/37", []);
+      log("OSC: guest entrance name light OFF (hull door closed)");
     }
+
+    setState("YACHT NAME", { Lights: lights });
+    broadcastStateUpdate("YACHT NAME");
     return;
   }
 
@@ -368,15 +353,6 @@ app.post("/set", (req, res) => {
 
     const lightKey = Info === "UD SB" ? "UD SB" : "HULL DOOR";
     const lights = { ...getState("YACHT NAME").Lights };
-
-    if (
-      lightKey === "HULL DOOR" &&
-      State === "ON" &&
-      getState("HULL DOOR")?.State === "OPEN"
-    ) {
-      log("Ignored: hull-door name light ON request while HULL DOOR is OPEN");
-      return res.json({ Target, Info, State: lights["HULL DOOR"] });
-    }
 
     lights[lightKey] = State;
     setState("YACHT NAME", { Lights: lights });

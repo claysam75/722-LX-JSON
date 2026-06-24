@@ -33,7 +33,7 @@ function initialiseDefaults() {
       base.Intensities = makeSubzoneDefault();
     }
     if (target === "YACHT NAME") {
-      base.Lights = { "UD SB": "OFF", "HULL DOOR": "OFF" };
+      base.Lights = { "UD SB": "OFF", "HULL DOOR": "OFF", "GUEST ENTRANCE": "OFF" };
     }
     state.set(target, base);
   });
@@ -103,8 +103,12 @@ function loadState() {
         }
         delete entry.Subzone;
       }
-      if (entry.Target === "YACHT NAME" && !entry.Lights) {
-        entry.Lights = { "UD SB": "OFF", "HULL DOOR": "OFF" };
+      if (entry.Target === "YACHT NAME") {
+        if (!entry.Lights) {
+          entry.Lights = { "UD SB": "OFF", "HULL DOOR": "OFF", "GUEST ENTRANCE": "OFF" };
+        } else if (!("GUEST ENTRANCE" in entry.Lights)) {
+          entry.Lights["GUEST ENTRANCE"] = "OFF";
+        }
       }
       state.set(entry.Target, entry);
     });

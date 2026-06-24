@@ -63,12 +63,15 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the discrete lighting 
 
 **`YACHT NAME` payloads:**
 
-`YACHT NAME` always produces two entries — one for the upper deck stbd name, and one reflecting the hull door position:
+`YACHT NAME` always produces three entries — one for the upper deck stbd name, one for the aft name (reflecting the hull door position), and one for the guest entrance name light (driven by the side guest entrance hull door):
 
 ```json
 { "Target": "YACHT NAME", "Info": "UD SB", "State": "ON" }
 { "Target": "YACHT NAME", "Info": "HULL DOOR CLOSED", "State": "ON" }
+{ "Target": "YACHT NAME", "Info": "GUEST ENTRANCE", "State": "OFF" }
 ```
+
+The `GUEST ENTRANCE` light turns ON when the side guest entrance hull door opens, and OFF when it closes.
 
 ---
 

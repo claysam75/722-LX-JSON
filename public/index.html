@@ -381,6 +381,56 @@
       .subzone-slot.has-colour .subzone-label { color: var(--text-muted); }
       .subzone-slot.has-colour .subzone-swatch { border-color: rgba(0,0,0,0.3); }
 
+      /* ── Name lights strip ──────────────────────────── */
+
+      .name-lights {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .name-light-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        background: var(--slot-bg);
+        border: 1px solid var(--slot-border);
+      }
+
+      .name-light-row .name-light-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--slot-label);
+      }
+
+      .name-light-row.name-on .name-light-dot {
+        background: #3a9a3a;
+        box-shadow: 0 0 5px #3a9a3a88;
+      }
+
+      .name-light-row .name-light-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        flex: 1;
+        text-transform: uppercase;
+      }
+
+      .name-light-row.name-on .name-light-label { color: var(--text); }
+
+      .name-light-row .name-light-state {
+        font-size: 10px;
+        color: var(--text-faint);
+      }
+
+      .name-light-row.name-on .name-light-state { color: var(--on-strong); }
+
       /* ── Intensity strip ─────────────────────────────── */
 
       .intensity-strip {
@@ -661,6 +711,29 @@
           lightingGrid.appendChild(header);
 
           groupItems.forEach((item) => {
+            if (item.Target === "YACHT NAME") {
+              const lights = item.Lights || {};
+              const anyOn = Object.values(lights).some((v) => v === "ON");
+              const lightRows = [
+                { key: "UD SB",          label: "UD SB" },
+                { key: "HULL DOOR",      label: "Hull Door" },
+                { key: "GUEST ENTRANCE", label: "Guest Entrance" },
+              ].map(({ key, label }) => {
+                const on = lights[key] === "ON";
+                return `<div class="name-light-row${on ? " name-on" : ""}">
+                  <span class="name-light-dot"></span>
+                  <span class="name-light-label">${label}</span>
+                  <span class="name-light-state">${lights[key] || "OFF"}</span>
+                </div>`;
+              }).join("");
+
+              const div = document.createElement("div");
+              div.className = "card " + (anyOn ? "on" : "off");
+              div.innerHTML = `<strong>YACHT NAME</strong><div class="name-lights">${lightRows}</div>`;
+              lightingGrid.appendChild(div);
+              return;
+            }
+
             const hasSubzones = COLOUR_INTENSITY_TARGETS.includes(item.Target);
             const coloursHTML   = hasSubzones && item.Colours     ? subzoneStripHTML(item.Colours) : "";
             const intensityHTML = hasSubzones && item.Intensities ? intensityStripHTML(item.Intensities) : "";
