@@ -62,6 +62,15 @@ function syncLdDoorSpots() {
   }
 }
 
+function pushStateToExternal() {
+  const payloads = FEEDBACK_TARGETS.flatMap(buildFeedbackPayloads);
+  fetch("http://10.50.40.103/cws/dmxpc/state?payload=TypeA", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payloads),
+  }).catch((err) => log(`WARN: External state push failed: ${err.message}`));
+}
+
 io.on("connection", (socket) => {
   log("New client connected");
   socket.emit("state:all", getAllStates());
@@ -109,6 +118,7 @@ app.get("/state", (req, res) => {
   log(`State feedback request: ${id}`);
 
   res.json(payloads);
+  pushStateToExternal();
 });
 
 app.post("/eventmode", (req, res) => {
@@ -200,6 +210,7 @@ app.post("/toggle", (req, res) => {
 
     setState("YACHT NAME", { Lights: lights });
     broadcastStateUpdate("YACHT NAME");
+    pushStateToExternal();
     return res.json({ Target, State: lights["UD SB"], Info });
   }
 
@@ -304,9 +315,7 @@ app.post("/toggle", (req, res) => {
   }
 
   broadcastStateUpdate(Target);
-
-  //send OSC message
-  // toggle zone
+  pushStateToExternal();
 
   res.json({ Target, State: newState, Info });
 });
@@ -321,6 +330,7 @@ app.post("/set", (req, res) => {
     }
     setState(Target, { State });
     broadcastStateUpdate(Target);
+    pushStateToExternal();
     res.json({ Target, State });
     return;
   }
@@ -347,6 +357,7 @@ app.post("/set", (req, res) => {
 
     setState("YACHT NAME", { Lights: lights });
     broadcastStateUpdate("YACHT NAME");
+    pushStateToExternal();
     return;
   }
 
@@ -370,6 +381,7 @@ app.post("/set", (req, res) => {
     }
 
     broadcastStateUpdate("YACHT NAME");
+    pushStateToExternal();
     return res.json({ Target, Info, State });
   }
 
@@ -456,9 +468,7 @@ app.post("/set", (req, res) => {
   }
 
   broadcastStateUpdate(Target);
-
-  //send OSC message
-  // set zone
+  pushStateToExternal();
 
   res.json({ Target, State, Info });
 });
@@ -497,6 +507,7 @@ app.post("/colour", (req, res) => {
   setState(Target, { Colours: updatedColours });
 
   broadcastStateUpdate(Target);
+  pushStateToExternal();
 
   if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
 
@@ -567,6 +578,7 @@ app.post("/intensity", (req, res) => {
   });
 
   broadcastStateUpdate(Target);
+  pushStateToExternal();
 
   if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
 
@@ -686,6 +698,7 @@ app.post("/scene", (req, res) => {
   }
 
   broadcastStateUpdate(Target);
+  pushStateToExternal();
   res.json({ Target, Scene });
 });
 
