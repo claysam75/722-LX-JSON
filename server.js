@@ -15,6 +15,16 @@ const {
   SCENES,
   FEEDBACK_TARGETS,
 } = require("./constants");
+const {
+  getSceneMembers,
+  getColIntMembers,
+  getGroupMembers,
+  getSceneGroup,
+  getColIntGroup,
+  isSceneGroup,
+  isColIntGroup,
+  describeHierarchy,
+} = require("./areas");
 
 const app = express();
 const server = http.createServer(app);
@@ -62,6 +72,85 @@ function syncLdDoorSpots() {
   }
 }
 
+/* --------------------------------------------------
+   Area Hierarchy Propagation
+
+   areas.json says which areas sit inside which scene and
+   colour/intensity group. A group command is executed by the
+   single OSC message the console already applies to the whole
+   group, so the helpers below only mirror the result into the
+   members' state — no extra OSC is sent.
+-------------------------------------------------- */
+
+function updateMember(target, patch) {
+  if (!getState(target)) {
+    log(`WARN: Unknown area target in hierarchy: ${target}`);
+    return;
+  }
+  setState(target, patch);
+  broadcastStateUpdate(target);
+}
+
+/** A group is ON while any of its members is ON. */
+function rollUpGroupState(groupTarget) {
+  const members = getGroupMembers(groupTarget);
+  if (!members.length) return;
+
+  const next = members.some((m) => getState(m)?.State === "ON") ? "ON" : "OFF";
+  if (getState(groupTarget)?.State === next) return;
+
+  setState(groupTarget, { State: next });
+  broadcastStateUpdate(groupTarget);
+}
+
+/** Roll an area's new state up into the groups it belongs to. */
+function rollUpFromArea(target) {
+  const groups = new Set(
+    [getSceneGroup(target), getColIntGroup(target)].filter(Boolean),
+  );
+
+  for (const group of groups) {
+    if (group !== target) rollUpGroupState(group);
+  }
+}
+
+/** A scene set on a group lands on every area that group owns. */
+function applySceneToMembers(groupTarget, Scene) {
+  if (!isSceneGroup(groupTarget)) return;
+
+  const memberState = Scene === "OFF" ? "OFF" : "ON";
+
+  for (const member of getSceneMembers(groupTarget)) {
+    updateMember(member, { Scene, State: memberState });
+    log(`Scene ${Scene} applied to ${member} (member of ${groupTarget})`);
+  }
+
+  setState(groupTarget, { State: memberState });
+}
+
+/** Colour set on a group lands on the members that hold colour of their own. */
+function applyColoursToMembers(groupTarget, colours) {
+  for (const member of getColIntMembers(groupTarget)) {
+    if (!getState(member)?.Colours) continue;
+    updateMember(member, { Colours: { ...colours } });
+    log(`Colour applied to ${member} (member of ${groupTarget})`);
+  }
+}
+
+/** Intensity set on a group dims every member; all-zero turns them off. */
+function applyIntensitiesToMembers(groupTarget, intensities, allOff) {
+  for (const member of getColIntMembers(groupTarget)) {
+    const patch = { State: allOff ? "OFF" : "ON" };
+    if (getState(member)?.Intensities) {
+      patch.Intensities = { ...intensities };
+    }
+    updateMember(member, patch);
+    log(
+      `Intensity applied to ${member} (member of ${groupTarget}) → ${patch.State}`,
+    );
+  }
+}
+
 function pushStateToExternal() {
   const payloads = FEEDBACK_TARGETS.flatMap(buildFeedbackPayloads);
   fetch("http://10.50.40.103/cws/dmxpc/state?payload=TypeA", {
@@ -78,6 +167,10 @@ io.on("connection", (socket) => {
 
 app.get("/", (req, res) => {
   return res.json(getAllStates());
+});
+
+app.get("/areas", (req, res) => {
+  return res.json(describeHierarchy());
 });
 
 function buildFeedbackPayloads(target) {
@@ -218,6 +311,7 @@ app.post("/toggle", (req, res) => {
 
   const newState = current.State === "ON" ? "OFF" : "ON";
   setState(Target, { State: newState });
+  rollUpFromArea(Target);
 
   switch (Target) {
     case "POOL":
@@ -398,6 +492,7 @@ app.post("/set", (req, res) => {
   }
 
   setState(Target, { State, Info });
+  rollUpFromArea(Target);
 
   switch (Target) {
     case "SUN DECK FWD SPOTS":
@@ -506,6 +601,12 @@ app.post("/colour", (req, res) => {
 
   setState(Target, { Colours: updatedColours });
 
+  if (isColIntGroup(Target)) {
+    applyColoursToMembers(Target, updatedColours);
+  } else {
+    rollUpFromArea(Target);
+  }
+
   broadcastStateUpdate(Target);
   pushStateToExternal();
 
@@ -577,6 +678,12 @@ app.post("/intensity", (req, res) => {
     State: allOff ? "OFF" : "ON",
   });
 
+  if (isColIntGroup(Target)) {
+    applyIntensitiesToMembers(Target, updatedIntensities, allOff);
+  } else {
+    rollUpFromArea(Target);
+  }
+
   broadcastStateUpdate(Target);
   pushStateToExternal();
 
@@ -627,6 +734,7 @@ app.post("/scene", (req, res) => {
   }
 
   setState(Target, { Scene });
+  applySceneToMembers(Target, Scene);
 
   switch (Target) {
     case "SUN DECK EXTERIOR FWD":

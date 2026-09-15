@@ -1,3 +1,82 @@
+const {
+  AREA_TARGETS,
+  TOGGLE_AREA_TARGETS,
+  SET_AREA_TARGETS,
+  COL_INT_DIRECT_TARGETS,
+  SCENE_GROUP_TARGETS,
+  COL_INT_GROUP_TARGETS,
+} = require("./areas");
+
+/* --------------------------------------------------
+   Targets outside the deck/area hierarchy
+
+   areas.json owns the deck exterior areas. The targets
+   below are vessel-wide or system targets that are not
+   nested under a deck, so they are listed here and
+   merged into the derived lists further down.
+-------------------------------------------------- */
+
+const UNDERWATER_TARGETS = [
+  "UNDERWATER ALL",
+  "UNDERWATER STERN",
+  "UNDERWATER AFT PS",
+  "UNDERWATER AFT SB",
+  "UNDERWATER MID PS",
+  "UNDERWATER MID SB",
+  "UNDERWATER FWD",
+  "UNDERWATER UP BOW",
+];
+
+/* Toggled, but not an area on a deck */
+const EXTRA_TOGGLE_TARGETS = ["YACHT NAME", ...UNDERWATER_TARGETS];
+
+/* Set directly by the ship's systems rather than by a deck control */
+const EXTRA_SET_TARGETS = ["FIRE ALARM", "HULL DOOR", "LD DOOR SPOTS"];
+
+/* Take colour/intensity directly, but are not a deck area or group */
+const EXTRA_COLOUR_INTENSITY_TARGETS = ["YACHT NAME", "UNDERWATER ALL"];
+
+/* Take a scene, but are not a deck scene group */
+const EXTRA_SCENE_TARGETS = ["VESSEL"];
+
+/* Canonical output order for GET / and the persisted state file. Any area or
+   group added to areas.json that is missing here is appended automatically. */
+const TARGET_ORDER = [
+  "POOL",
+  "WHIRLPOOL",
+  "YACHT NAME",
+  ...UNDERWATER_TARGETS,
+  "SUN DECK FWD SPOTS",
+  "SUN DECK FWD STRIPS",
+  "MAIN DECK AFT SPOTS POOL AND TABLE",
+  "MAIN DECK AFT SPOTS",
+  "MAIN DECK AFT STRIPS",
+  "MAIN DECK COURTESY",
+  "SUN DECK EXTERIOR FWD",
+  "MAIN DECK EXTERIOR AFT",
+  "LOWER DECK WET AREA",
+  "LD DOOR SPOTS",
+  "VESSEL",
+];
+
+/* Order of the payloads returned by GET /state — an output contract, so the
+   existing order is fixed and new areas are appended to the end. */
+const FEEDBACK_ORDER = [
+  "POOL",
+  "WHIRLPOOL",
+  "YACHT NAME",
+  ...UNDERWATER_TARGETS,
+  "SUN DECK FWD SPOTS",
+  "SUN DECK FWD STRIPS",
+  "MAIN DECK AFT SPOTS POOL AND TABLE",
+  "MAIN DECK AFT SPOTS",
+  "MAIN DECK AFT STRIPS",
+  "MAIN DECK COURTESY",
+  "LD DOOR SPOTS",
+];
+
+const dedupe = (...lists) => Array.from(new Set(lists.flat()));
+
 const COLOUR_OSC_MAPPINGS = {
   POOL: {
     0: {
@@ -1080,96 +1159,43 @@ module.exports = {
 
   INTENSITIES: ["100", "75", "50", "25", "0"],
 
-  ALL_TARGETS: [
-    "POOL",
-    "WHIRLPOOL",
-    "YACHT NAME",
-    "UNDERWATER ALL",
-    "UNDERWATER STERN",
-    "UNDERWATER AFT PS",
-    "UNDERWATER AFT SB",
-    "UNDERWATER MID PS",
-    "UNDERWATER MID SB",
-    "UNDERWATER FWD",
-    "UNDERWATER UP BOW",
-    "SUN DECK FWD SPOTS",
-    "SUN DECK FWD STRIPS",
-    "MAIN DECK AFT SPOTS POOL AND TABLE",
-    "MAIN DECK AFT SPOTS",
-    "MAIN DECK AFT STRIPS",
-    "MAIN DECK COURTESY",
-    "SUN DECK EXTERIOR FWD",
-    "MAIN DECK EXTERIOR AFT",
-    "LOWER DECK WET AREA",
-    "LD DOOR SPOTS",
-    "VESSEL",
-  ],
+  /* --------------------------------------------------
+     Derived from areas.json — do not hand-edit
+  -------------------------------------------------- */
 
-  TOGGLE_TARGETS: [
-    "POOL",
-    "WHIRLPOOL",
-    "YACHT NAME",
-    "UNDERWATER ALL",
-    "UNDERWATER STERN",
-    "UNDERWATER AFT PS",
-    "UNDERWATER AFT SB",
-    "UNDERWATER MID PS",
-    "UNDERWATER MID SB",
-    "UNDERWATER FWD",
-    "UNDERWATER UP BOW",
-  ],
+  // Every target the server holds state for
+  ALL_TARGETS: dedupe(
+    TARGET_ORDER,
+    AREA_TARGETS,
+    SCENE_GROUP_TARGETS,
+    COL_INT_GROUP_TARGETS,
+  ),
 
-  SET_TARGETS: [
-    "SUN DECK FWD SPOTS",
-    "SUN DECK FWD STRIPS",
-    "MAIN DECK AFT SPOTS POOL AND TABLE",
-    "MAIN DECK AFT SPOTS",
-    "MAIN DECK AFT STRIPS",
-    "MAIN DECK COURTESY",
-    "FIRE ALARM",
-    "HULL DOOR",
-    "LD DOOR SPOTS",
-  ],
+  // POST /toggle
+  TOGGLE_TARGETS: dedupe(TOGGLE_AREA_TARGETS, EXTRA_TOGGLE_TARGETS),
 
-  FEEDBACK_TARGETS: [
-    "POOL",
-    "WHIRLPOOL",
-    "YACHT NAME",
-    "UNDERWATER ALL",
-    "UNDERWATER STERN",
-    "UNDERWATER AFT PS",
-    "UNDERWATER AFT SB",
-    "UNDERWATER MID PS",
-    "UNDERWATER MID SB",
-    "UNDERWATER FWD",
-    "UNDERWATER UP BOW",
-    "SUN DECK FWD SPOTS",
-    "SUN DECK FWD STRIPS",
-    "MAIN DECK AFT SPOTS POOL AND TABLE",
-    "MAIN DECK AFT SPOTS",
-    "MAIN DECK AFT STRIPS",
-    "MAIN DECK COURTESY",
-    "LD DOOR SPOTS",
-  ],
+  // POST /set
+  SET_TARGETS: dedupe(SET_AREA_TARGETS, EXTRA_SET_TARGETS),
 
-  COLOUR_INTENSITY_TARGETS: [
-    "POOL",
-    "WHIRLPOOL",
-    "YACHT NAME",
-    "UNDERWATER ALL",
-    "SUN DECK EXTERIOR FWD",
-    "MAIN DECK EXTERIOR AFT",
-    "LOWER DECK WET AREA",
-  ],
+  // GET /state
+  FEEDBACK_TARGETS: dedupe(
+    FEEDBACK_ORDER,
+    TOGGLE_AREA_TARGETS,
+    SET_AREA_TARGETS,
+  ),
+
+  // POST /colour and POST /intensity — areas that take them directly, plus
+  // the groups that pass them down to their members
+  COLOUR_INTENSITY_TARGETS: dedupe(
+    COL_INT_DIRECT_TARGETS,
+    COL_INT_GROUP_TARGETS,
+    EXTRA_COLOUR_INTENSITY_TARGETS,
+  ),
 
   SUBZONE_COUNT: 4,
 
-  SCENE_TARGETS: [
-    "SUN DECK EXTERIOR FWD",
-    "MAIN DECK EXTERIOR AFT",
-    "LOWER DECK WET AREA",
-    "VESSEL",
-  ],
+  // POST /scene
+  SCENE_TARGETS: dedupe(SCENE_GROUP_TARGETS, EXTRA_SCENE_TARGETS),
 
   TARGET_OSC_MAPPINGS: {
     POOL: "MD Pool*",
@@ -1188,7 +1214,7 @@ module.exports = {
     "MAIN DECK AFT SPOTS POOL AND TABLE": "/MD AFT SPOTS POOL AND TABLE*",
     "MAIN DECK AFT SPOTS": "/MD AFT SPOTS*",
     "MAIN DECK AFT STRIPS": "/MD AFT STRIPS*",
-    "MAIN DECK COURTESY SPOTS": "/MD COURTESY SPOTS*",
+    "MAIN DECK COURTESY": "/MD COURTESY SPOTS*",
     "SUN DECK EXTERIOR FWD": "/SD EXTERIOR FWD*",
     "MAIN DECK EXTERIOR AFT": "/MD EXTERIOR AFT*",
     "LOWER DECK WET AREA": "/LD WET AREA*",

@@ -1,0 +1,80 @@
+{
+  "Sun Deck": {
+    "Whirlpool": {
+      "Target": "WHIRLPOOL",
+      "Toggle": "Yes",
+      "Set": "No",
+      "ColIntDirect": "Yes",
+      "SceneMember": "Sun Deck Exterior Fwd",
+      "ColIntMember": "Sun Deck Exterior Fwd"
+    },
+    "Sun Deck Fwd Spots": {
+      "Target": "SUN DECK FWD SPOTS",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "Sun Deck Exterior Fwd",
+      "ColIntMember": "Sun Deck Exterior Fwd"
+    },
+    "Sun Deck Fwd Strips": {
+      "Target": "SUN DECK FWD STRIPS",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "Sun Deck Exterior Fwd",
+      "ColIntMember": "Sun Deck Exterior Fwd"
+    }
+  },
+  "Main Deck": {
+    "Pool": {
+      "Target": "POOL",
+      "Toggle": "Yes",
+      "Set": "No",
+      "ColIntDirect": "Yes",
+      "SceneMember": "Main Deck Exterior Aft",
+      "ColIntMember": "Main Deck Exterior Aft"
+    },
+    "MD Aft Spots Pool + Table": {
+      "Target": "MAIN DECK AFT SPOTS POOL AND TABLE",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "Main Deck Exterior Aft",
+      "ColIntMember": "Main Deck Exterior Aft"
+    },
+    "Main Deck Aft Spots": {
+      "Target": "MAIN DECK AFT SPOTS",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "Main Deck Exterior Aft",
+      "ColIntMember": "Main Deck Exterior Aft"
+    },
+    "Main Deck Aft Strips": {
+      "Target": "MAIN DECK AFT STRIPS",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "Main Deck Exterior Aft",
+      "ColIntMember": "Main Deck Exterior Aft"
+    },
+    "Main Deck Courtesy": {
+      "Target": "MAIN DECK COURTESY",
+      "Toggle": "No",
+      "Set": "Yes",
+      "ColIntDirect": "No",
+      "SceneMember": "",
+      "ColIntMember": ""
+    }
+  },
+  "Lower Deck": {
+    "Lower Deck Wet Area": {
+      "Target": "LOWER DECK WET AREA",
+      "Toggle": "No",
+      "Set": "No",
+      "ColIntDirect": "Yes",
+      "SceneMember": "Lower Deck Wet Area",
+      "ColIntMember": "Lower Deck Wet Area"
+    }
+  }
+}

@@ -26,7 +26,76 @@ Accessible at http://ip:4002
 
 ---
 
+## Area Hierarchy (`areas.json`)
+
+`areas.json` is the single source of truth for which areas sit on which deck,
+which commands each area answers to, and which groups it belongs to. Every
+target list in `constants.js` is derived from it at start-up, so an area is
+described in one place only.
+
+Each area has:
+
+| Field          | Meaning                                                                |
+| -------------- | ---------------------------------------------------------------------- |
+| `Target`       | The API target name used in request bodies                             |
+| `Toggle`       | `Yes` if the area accepts `POST /toggle`                               |
+| `Set`          | `Yes` if the area accepts `POST /set`                                  |
+| `ColIntDirect` | `Yes` if the area accepts `POST /colour` and `POST /intensity` directly |
+| `SceneMember`  | Scene group the area belongs to, or `""` for none                      |
+| `ColIntMember` | Colour/intensity group the area belongs to, or `""` for none           |
+
+Current structure:
+
+| Deck       | Area                                 | Toggle | Set | Col/Int direct | Scene + Col/Int group  |
+| ---------- | ------------------------------------ | ------ | --- | -------------- | ---------------------- |
+| Sun Deck   | `WHIRLPOOL`                          | Yes    | No  | Yes            | SUN DECK EXTERIOR FWD  |
+| Sun Deck   | `SUN DECK FWD SPOTS`                 | No     | Yes | No             | SUN DECK EXTERIOR FWD  |
+| Sun Deck   | `SUN DECK FWD STRIPS`                | No     | Yes | No             | SUN DECK EXTERIOR FWD  |
+| Main Deck  | `POOL`                               | Yes    | No  | Yes            | MAIN DECK EXTERIOR AFT |
+| Main Deck  | `MAIN DECK AFT SPOTS POOL AND TABLE` | No     | Yes | No             | MAIN DECK EXTERIOR AFT |
+| Main Deck  | `MAIN DECK AFT SPOTS`                | No     | Yes | No             | MAIN DECK EXTERIOR AFT |
+| Main Deck  | `MAIN DECK AFT STRIPS`               | No     | Yes | No             | MAIN DECK EXTERIOR AFT |
+| Main Deck  | `MAIN DECK COURTESY`                 | No     | Yes | No             | _none_                 |
+| Lower Deck | `LOWER DECK WET AREA`                | No     | No  | Yes            | LOWER DECK WET AREA    |
+
+`LOWER DECK WET AREA` names itself as its own group — it is both the group
+target and the area that takes colour and intensity directly.
+
+### What the hierarchy drives
+
+- **Command validation.** A target is only accepted by `/toggle`, `/set`,
+  `/colour`, `/intensity` and `/scene` if the hierarchy says it answers to that
+  command. The request bodies, responses and error messages are unchanged.
+- **Group commands flow down.** A scene, colour or intensity set on a group
+  updates the state of every member of that group. A scene of `OFF`, or an
+  intensity of `0`, turns its members `OFF`; any other value turns them `ON`.
+  Members with no colour of their own (spots and strips) follow the on/off
+  state only. An area with no group (`MAIN DECK COURTESY`) is never touched by
+  a group command.
+- **Member state rolls up.** A group reads `ON` while any of its members is
+  `ON`, and `OFF` once they are all off.
+
+Propagation is state only — the console already applies a group command to the
+whole group, so no extra OSC messages are sent. `GET /state` therefore reports
+what the lights are actually doing after a group command, rather than the last
+value that area was given individually.
+
+### Editing it
+
+Add, move or re-flag an area in `areas.json` and restart — the target lists,
+validation and propagation all follow. Targets outside the deck hierarchy
+(yacht name, underwater, vessel, fire alarm, hull door, LD door spots) are
+listed at the top of `constants.js`.
+
+---
+
 ## Endpoints
+
+### `GET /areas`
+
+Returns the area hierarchy as loaded from `areas.json`, grouped by deck.
+
+---
 
 ### `GET /`
 
@@ -149,7 +218,7 @@ Sets a target to an explicit ON or OFF state.
 - `MAIN DECK AFT SPOTS POOL AND TABLE`
 - `MAIN DECK AFT SPOTS`
 - `MAIN DECK AFT STRIPS`
-- `MAIN DECK COURTESY SPOTS`
+- `MAIN DECK COURTESY`
 
 ---
 
