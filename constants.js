@@ -1050,7 +1050,7 @@ const INTENSITY_OSC_MAPPINGS = {
 module.exports = {
   COLOUR_OSC_MAPPINGS,
   INTENSITY_OSC_MAPPINGS,
-  OSC_TARGET: "10.101.1.114",
+  OSC_TARGET: "172.20.10.3",
   OSC_PORT: 8000,
 
   SCENES: ["ON", "DIM", "NIGHT", "OFF"],
@@ -1068,7 +1068,7 @@ module.exports = {
     { index: 5, name: "Cyan", hex: "#00FFFF" },
     { index: 6, name: "Magenta", hex: "#FF00FF" },
     { index: 7, name: "White", hex: "#FFFFFF" },
-    { index: 8, name: "Warm White", hex: "#FFA500" },
+    { index: 8, name: "Warm White", hex: "#f4ddb3" },
     { index: 9, name: "Orange", hex: "#FFA500" },
     { index: 10, name: "Purple", hex: "#800080" },
     { index: 11, name: "Pink", hex: "#FFC0CB" },

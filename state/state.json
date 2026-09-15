@@ -2,19 +2,19 @@
   {
     "Target": "POOL",
     "Info": "",
-    "State": "ON",
+    "State": "OFF",
     "Scene": "",
     "Colours": {
-      "1": "",
-      "2": "",
-      "3": "",
-      "4": ""
+      "1": 13,
+      "2": 13,
+      "3": 13,
+      "4": 13
     },
     "Intensities": {
-      "1": "",
-      "2": "",
-      "3": "",
-      "4": ""
+      "1": "75",
+      "2": "75",
+      "3": "75",
+      "4": "75"
     }
   },
   {
@@ -53,8 +53,8 @@
       "4": ""
     },
     "Lights": {
-      "UD SB": "ON",
-      "HULL DOOR": "ON",
+      "UD SB": "OFF",
+      "HULL DOOR": "OFF",
       "GUEST ENTRANCE": "OFF"
     }
   },
@@ -120,37 +120,31 @@
   },
   {
     "Target": "SUN DECK FWD SPOTS",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
   {
     "Target": "SUN DECK FWD STRIPS",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
   {
     "Target": "MAIN DECK AFT SPOTS POOL AND TABLE",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
   {
     "Target": "MAIN DECK AFT SPOTS",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
   {
     "Target": "MAIN DECK AFT STRIPS",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
   {
     "Target": "MAIN DECK COURTESY",
-    "Info": "",
     "State": "OFF",
     "Scene": ""
   },
@@ -158,7 +152,7 @@
     "Target": "SUN DECK EXTERIOR FWD",
     "Info": "",
     "State": "OFF",
-    "Scene": "",
+    "Scene": "OFF",
     "Colours": {
       "1": "",
       "2": "",
@@ -176,7 +170,7 @@
     "Target": "MAIN DECK EXTERIOR AFT",
     "Info": "",
     "State": "OFF",
-    "Scene": "",
+    "Scene": "OFF",
     "Colours": {
       "1": "",
       "2": "",
@@ -194,7 +188,7 @@
     "Target": "LOWER DECK WET AREA",
     "Info": "",
     "State": "OFF",
-    "Scene": "",
+    "Scene": "OFF",
     "Colours": {
       "1": "",
       "2": "",
@@ -218,7 +212,7 @@
     "Target": "VESSEL",
     "Info": "",
     "State": "OFF",
-    "Scene": ""
+    "Scene": "OFF"
   },
   {
     "Target": "FIRE ALARM",
