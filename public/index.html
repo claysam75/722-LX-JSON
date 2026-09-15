@@ -121,7 +121,8 @@
         color: var(--text-dim);
       }
 
-      .theme-toggle {
+      .theme-toggle,
+      .log-filter {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
         color: var(--text-dim);
@@ -135,7 +136,8 @@
         transition: background 0.2s, border-color 0.2s, color 0.2s;
       }
 
-      .theme-toggle:hover {
+      .theme-toggle:hover,
+      .log-filter:hover {
         color: var(--text);
         border-color: var(--text-dim);
       }
@@ -144,6 +146,13 @@
 
       .section {
         margin-bottom: 28px;
+      }
+
+      .section-label.with-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
       }
 
       .section-label {
@@ -532,6 +541,8 @@
       .log-entry .log-msg { color: var(--text-dim); }
 
       .log-entry.warn .log-msg { color: #cc8800; }
+
+      #logs.hide-feedback .log-entry.feedback { display: none; }
     </style>
   </head>
   <body>
@@ -559,7 +570,10 @@
     </div>
 
     <div class="section">
-      <div class="section-label">Logs</div>
+      <div class="section-label with-action">
+        <span>Logs</span>
+        <button class="log-filter" id="feedback-toggle"></button>
+      </div>
       <div id="logs"></div>
     </div>
 
@@ -585,6 +599,29 @@
       const eventGrid     = document.getElementById("event-mode-grid");
       const lightingGrid  = document.getElementById("lighting-grid");
       const logsEl        = document.getElementById("logs");
+
+      /* ── Feedback-request log filter ─────────────────── */
+
+      const FEEDBACK_LOG_PREFIX = "State feedback request:";
+      const feedbackToggle = document.getElementById("feedback-toggle");
+      let feedbackHidden = localStorage.getItem("hideFeedbackLogs") !== "0";
+      let feedbackCount = 0;
+
+      function renderFeedbackToggle() {
+        logsEl.classList.toggle("hide-feedback", feedbackHidden);
+        feedbackToggle.textContent = feedbackHidden
+          ? `Show feedback${feedbackCount ? ` (${feedbackCount})` : ""}`
+          : "Hide feedback";
+      }
+
+      renderFeedbackToggle();
+
+      feedbackToggle.addEventListener("click", () => {
+        feedbackHidden = !feedbackHidden;
+        localStorage.setItem("hideFeedbackLogs", feedbackHidden ? "1" : "0");
+        renderFeedbackToggle();
+        if (!feedbackHidden) logsEl.scrollTop = logsEl.scrollHeight;
+      });
 
       /* ── State class helpers ─────────────────────────── */
 
@@ -783,10 +820,31 @@
 
       socket.on("log", ({ message, timestamp }) => {
         const time = new Date(timestamp).toLocaleTimeString();
+        const isFeedback = message.startsWith(FEEDBACK_LOG_PREFIX);
+
         const entry = document.createElement("div");
-        entry.className = "log-entry" + (message.startsWith("WARN") ? " warn" : "");
-        entry.innerHTML = `<span class="log-time">${time}</span><span class="log-msg">${message}</span>`;
+        entry.className =
+          "log-entry" +
+          (message.startsWith("WARN") ? " warn" : "") +
+          (isFeedback ? " feedback" : "");
+
+        const timeEl = document.createElement("span");
+        timeEl.className = "log-time";
+        timeEl.textContent = time;
+
+        const msgEl = document.createElement("span");
+        msgEl.className = "log-msg";
+        msgEl.textContent = message;
+
+        entry.append(timeEl, msgEl);
         logsEl.appendChild(entry);
+
+        if (isFeedback) {
+          feedbackCount++;
+          renderFeedbackToggle();
+          if (feedbackHidden) return;
+        }
+
         logsEl.scrollTop = logsEl.scrollHeight;
       });
     </script>
