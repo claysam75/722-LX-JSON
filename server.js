@@ -14,12 +14,21 @@ const {
   SCENE_TARGETS,
   SCENES,
   FEEDBACK_TARGETS,
+  TARGET_ALIASES,
 } = require("./constants");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+  const alias = TARGET_ALIASES[req.body?.Target];
+  if (alias) {
+    log(`Target alias: ${req.body.Target} → ${alias}`);
+    req.body.Target = alias;
+  }
+  next();
+});
 app.use(express.static("public"));
 const PORT = 4002;
 
@@ -106,7 +115,8 @@ function buildFeedbackPayloads(target) {
 }
 
 app.get("/state", (req, res) => {
-  const { id = "EVERYTHING" } = req.query;
+  const { id: rawId = "EVERYTHING" } = req.query;
+  const id = TARGET_ALIASES[rawId] ?? rawId;
 
   if (id !== "EVERYTHING" && !FEEDBACK_TARGETS.includes(id)) {
     return res.status(400).json({ error: "Invalid target" });

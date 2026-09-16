@@ -1050,7 +1050,7 @@ const INTENSITY_OSC_MAPPINGS = {
 module.exports = {
   COLOUR_OSC_MAPPINGS,
   INTENSITY_OSC_MAPPINGS,
-  OSC_TARGET: "172.20.10.3",
+  OSC_TARGET: "127.0.0.1",
   OSC_PORT: 8000,
 
   SCENES: ["ON", "DIM", "NIGHT", "OFF"],
@@ -1163,6 +1163,12 @@ module.exports = {
   ],
 
   SUBZONE_COUNT: 4,
+
+  // Incoming target names that differ from the canonical names above.
+  // Applied to req.body.Target (middleware) and GET /state?id=.
+  TARGET_ALIASES: {
+    UNDERWATER: "UNDERWATER ALL",
+  },
 
   SCENE_TARGETS: [
     "SUN DECK EXTERIOR FWD",
