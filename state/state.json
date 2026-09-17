@@ -212,7 +212,13 @@
     "Target": "VESSEL",
     "Info": "",
     "State": "OFF",
-    "Scene": "OFF"
+    "Scene": "ALL_ON"
+  },
+  {
+    "Target": "LOWER DECK COURTESY",
+    "Info": "",
+    "State": "OFF",
+    "Scene": ""
   },
   {
     "Target": "FIRE ALARM",

@@ -608,8 +608,8 @@
           const s = (scene || "").toUpperCase();
           if (s === "DIM")   return "vessel-dim";
           if (s === "NIGHT") return "vessel-night";
-          if (s === "ON")    return "status-on";
-          return "status-off";
+          if (s === "" || s === "OFF" || s === "ALL_OFF") return "status-off";
+          return "status-on";
         }
         const s = (state || "").toLowerCase();
         return s === "on" ? "status-on" : "status-off";

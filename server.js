@@ -13,6 +13,8 @@ const {
   SUBZONE_COUNT,
   SCENE_TARGETS,
   SCENES,
+  VESSEL_SCENES,
+  VESSEL_SCENE_OSC,
   FEEDBACK_TARGETS,
   TARGET_ALIASES,
 } = require("./constants");
@@ -404,6 +406,9 @@ app.post("/set", (req, res) => {
   }
 
   if (!SET_TARGETS.includes(Target)) {
+    console.log(
+      `WARN: Attempt to set state for non-settable target: ${Target}`,
+    );
     return res.status(400).json({ error: "Target cannot be set" });
   }
 
@@ -471,6 +476,15 @@ app.post("/set", (req, res) => {
       } else {
         sendOSC("/s/ld-door-sp/0");
         log("OSC: LD Door Spots OFF");
+      }
+      break;
+    case "LOWER DECK COURTESY":
+      if (State == "ON") {
+        sendOSC("/exec/2/140");
+        log("OSC: Lower Deck Courtesy ON");
+      } else {
+        sendOSC("/exec/2/139");
+        log("OSC: Lower Deck Courtesy OFF");
       }
       break;
     default:
@@ -632,7 +646,9 @@ app.post("/scene", (req, res) => {
     return res.status(400).json({ error: "Target cannot have a scene set" });
   }
 
-  if (!SCENES.includes(Scene)) {
+  const allowedScenes =
+    Target === "VESSEL" ? [...SCENES, ...VESSEL_SCENES] : SCENES;
+  if (!allowedScenes.includes(Scene)) {
     return res.status(400).json({ error: "Invalid scene" });
   }
 
@@ -701,6 +717,14 @@ app.post("/scene", (req, res) => {
       } else if (Scene === "OFF") {
         sendOSC("/exec/10/17", []);
         log("OSC: Vessel Scene OFF");
+      } else if (VESSEL_SCENES.includes(Scene)) {
+        const addr = VESSEL_SCENE_OSC[Scene];
+        if (addr) {
+          sendOSC(addr, []);
+          log(`OSC: Vessel Scene ${Scene}`);
+        } else {
+          log(`WARN: No OSC address configured for Vessel scene ${Scene}`);
+        }
       }
       break;
     default:

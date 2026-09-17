@@ -745,6 +745,31 @@
             </td>
           </tr>
           <tr>
+            <td>LOWER DECK COURTESY</td>
+            <td>ON / OFF</td>
+            <td class="osc">/exec/2/140</td>
+            <td class="osc">/exec/2/139</td>
+            <td>—</td>
+            <td>
+              <button
+                class="btn btn-on"
+                onclick="
+                  fire('set', { Target: 'LOWER DECK COURTESY', State: 'ON' })
+                "
+              >
+                ON
+              </button>
+              <button
+                class="btn btn-off"
+                onclick="
+                  fire('set', { Target: 'LOWER DECK COURTESY', State: 'OFF' })
+                "
+              >
+                OFF
+              </button>
+            </td>
+          </tr>
+          <tr>
             <td>FIRE ALARM</td>
             <td>SILENT / SOUNDING</td>
             <td colspan="2">State only, no OSC</td>
@@ -1063,6 +1088,75 @@
                 onclick="fire('scene', { Target: 'VESSEL', Scene: 'OFF' })"
               >
                 OFF
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>VESSEL (extended scenes)</td>
+            <td colspan="4">
+              Addresses from <code>VESSEL_SCENE_OSC</code> in constants.js
+            </td>
+            <td>—</td>
+            <td>
+              <button
+                class="btn btn-on"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ALL_ON' })"
+              >
+                ALL_ON
+              </button>
+              <button
+                class="btn btn-off"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ALL_OFF' })"
+              >
+                ALL_OFF
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'UNDERWAY' })"
+              >
+                UNDERWAY
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'DOCK_GUESTS' })"
+              >
+                DOCK_GUESTS
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'DOCK_CREW' })"
+              >
+                DOCK_CREW
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ANCHOR_GUESTS' })"
+              >
+                ANCHOR_GUESTS
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ANCHOR_CREW' })"
+              >
+                ANCHOR_CREW
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'MAX_LIGHTING' })"
+              >
+                MAX_LIGHTING
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'HELI_OPS' })"
+              >
+                HELI_OPS
+              </button>
+              <button
+                class="btn btn-neutral"
+                onclick="fire('scene', { Target: 'VESSEL', Scene: 'PARTY' })"
+              >
+                PARTY
               </button>
             </td>
           </tr>
