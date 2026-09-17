@@ -671,15 +671,52 @@
         font-size: 11px;
       }
 
+      /* One .log-group per triggering event (HTTP request / socket connect).
+         The first line is the header; the rest are indented children. */
+      .log-group {
+        border-bottom: 1px solid var(--log-divider);
+        padding: 1px 0;
+      }
+      .log-group:last-child { border-bottom: none; }
+      .log-group.hidden { display: none; }
+      .log-group.multi {
+        margin: 3px 0;
+        padding: 3px 6px 3px 0;
+        border-left: 2px solid var(--card-border);
+        border-radius: 0 4px 4px 0;
+        background: var(--slot-bg);
+      }
+      .log-group.multi .log-entry { padding-left: 8px; }
+      .log-group.multi .log-entry.child { padding-left: 22px; position: relative; }
+      .log-group.multi .log-entry.child::before {
+        content: "└";
+        position: absolute;
+        left: 9px;
+        color: var(--slot-label);
+      }
+      .log-group.multi .log-entry.head { cursor: pointer; }
+      .log-group.multi .log-entry.head:hover .log-msg { text-decoration: underline; }
+      .log-group.collapsed .log-entry.child { display: none; }
+      .log-fold {
+        display: none;
+        margin-left: 8px;
+        font-size: 9px;
+        padding: 0 5px;
+        border-radius: 8px;
+        background: var(--badge-off-bg);
+        color: var(--text-muted);
+        user-select: none;
+      }
+      .log-group.collapsed .log-fold { display: inline-block; }
+
       .log-entry {
         padding: 2px 0;
-        border-bottom: 1px solid var(--log-divider);
         color: var(--text-muted);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .log-entry:last-child { border-bottom: none; }
+      .log-entry.hidden { display: none; }
       .log-entry:hover { white-space: normal; word-break: break-word; }
       .log-time { color: var(--log-time); margin-right: 8px; user-select: none; }
       .log-msg { color: var(--text-dim); }
@@ -688,10 +725,6 @@
       .log-entry[data-kind="client"]   .log-msg { color: var(--client); }
       .log-entry[data-kind="feedback"] .log-msg { color: var(--feedback); }
       .log-entry[data-kind="osc"]      .log-msg { color: var(--on-strong); opacity: 0.85; }
-      .log-entry.search-miss { display: none; }
-      #logs.hide-feedback .log-entry[data-kind="feedback"] { display: none; }
-      #logs.hide-client   .log-entry[data-kind="client"]   { display: none; }
-      #logs.hide-osc      .log-entry[data-kind="osc"]      { display: none; }
 
       .log-footer {
         display: flex;
@@ -1162,6 +1195,8 @@
       let searchTerm = "";
       let follow = true;
       const kindCounts = { feedback: 0, client: 0, osc: 0 };
+      const groupEls = new Map();   // server group id → .log-group element
+      let entryCount = 0;
 
       function classify(message) {
         if (message.startsWith("New client connected")) return "client";
@@ -1175,14 +1210,38 @@
         return d.toLocaleTimeString([], { hour12: false }) + "." + String(d.getMilliseconds()).padStart(3, "0");
       }
 
-      function addLog({ message, timestamp }, forcedKind) {
+      function entryVisible(el) {
+        const k = el.dataset.kind;
+        if (k in filters && !filters[k]) return false;
+        if (searchTerm && !el.dataset.text.includes(searchTerm)) return false;
+        return true;
+      }
+
+      // Apply kind/search filters to one group; hide it entirely when nothing
+      // inside is visible, and only style it as a cluster when 2+ lines show.
+      function refreshGroup(groupEl) {
+        let visible = 0;
+        for (const el of groupEl.children) {
+          if (!el.classList.contains("log-entry")) continue;
+          const show = entryVisible(el);
+          el.classList.toggle("hidden", !show);
+          if (show) visible++;
+        }
+        groupEl.classList.toggle("hidden", visible === 0);
+        groupEl.classList.toggle("multi", visible > 1);
+        const fold = groupEl.querySelector(".log-fold");
+        if (fold) fold.textContent = `+${visible - 1}`;
+        return visible;
+      }
+
+      function addLog({ message, timestamp, group }, forcedKind) {
         const kind = forcedKind || classify(message);
         const el = document.createElement("div");
         el.className = "log-entry";
         el.dataset.kind = kind;
+        el.dataset.text = message.toLowerCase();
         if (kind === "error") el.classList.add("error");
         else if (message.startsWith("WARN")) el.classList.add("warn");
-        if (searchTerm && !message.toLowerCase().includes(searchTerm)) el.classList.add("search-miss");
 
         const time = document.createElement("span");
         time.className = "log-time";
@@ -1191,41 +1250,57 @@
         msg.className = "log-msg";
         msg.textContent = message;
         el.append(time, msg);
-        logsEl.appendChild(el);
 
+        let groupEl = group != null ? groupEls.get(group) : null;
+        if (groupEl) {
+          el.classList.add("child");
+        } else {
+          el.classList.add("head");
+          const fold = document.createElement("span");
+          fold.className = "log-fold";
+          el.appendChild(fold);
+          groupEl = document.createElement("div");
+          groupEl.className = "log-group";
+          if (group != null) {
+            groupEl.dataset.group = group;
+            groupEls.set(group, groupEl);
+          }
+          logsEl.appendChild(groupEl);
+        }
+        groupEl.appendChild(el);
+        refreshGroup(groupEl);
+
+        entryCount++;
         if (kind in kindCounts) kindCounts[kind]++;
-        while (logsEl.children.length > MAX_LOG_DOM) {
-          const k = logsEl.firstChild.dataset.kind;
-          if (k in kindCounts) kindCounts[k]--;
-          logsEl.removeChild(logsEl.firstChild);
+        while (entryCount > MAX_LOG_DOM && logsEl.firstChild) {
+          const oldest = logsEl.firstChild;
+          for (const child of oldest.querySelectorAll(".log-entry")) {
+            const k = child.dataset.kind;
+            if (k in kindCounts) kindCounts[k]--;
+            entryCount--;
+          }
+          if (oldest.dataset.group) groupEls.delete(Number(oldest.dataset.group));
+          oldest.remove();
         }
       }
 
-      function applyFilters() {
-        logsEl.classList.toggle("hide-feedback", !filters.feedback);
-        logsEl.classList.toggle("hide-client",   !filters.client);
-        logsEl.classList.toggle("hide-osc",      !filters.osc);
+      function updateFooter() {
         chips.forEach((c) => {
           const k = c.dataset.filter;
           c.classList.toggle("on", !!filters[k]);
           c.querySelector(".count").textContent = kindCounts[k];
           c.title = filters[k] ? `Hide ${k} messages` : `Show ${k} messages`;
         });
-        for (const el of logsEl.children) {
-          el.classList.toggle("search-miss", !!searchTerm && !el.textContent.toLowerCase().includes(searchTerm));
-        }
-        let visible = 0;
-        for (const el of logsEl.children) if (el.offsetParent !== null) visible++;
-        const total = logsEl.children.length;
-        logCount.textContent = visible === total ? `${total} entries` : `${visible} of ${total} entries`;
+        const visible = logsEl.querySelectorAll(".log-entry:not(.hidden)").length;
+        const groups = logsEl.querySelectorAll(".log-group:not(.hidden)").length;
+        logCount.textContent =
+          (visible === entryCount ? `${entryCount} entries` : `${visible} of ${entryCount} entries`) +
+          ` · ${groups} events`;
       }
 
-      function updateFooter() {
-        chips.forEach((c) => (c.querySelector(".count").textContent = kindCounts[c.dataset.filter]));
-        let visible = 0;
-        for (const el of logsEl.children) if (el.offsetParent !== null) visible++;
-        const total = logsEl.children.length;
-        logCount.textContent = visible === total ? `${total} entries` : `${visible} of ${total} entries`;
+      function applyFilters() {
+        for (const g of logsEl.children) refreshGroup(g);
+        updateFooter();
       }
 
       function scrollToLatest() {
@@ -1250,8 +1325,17 @@
 
       document.getElementById("log-clear").addEventListener("click", () => {
         logsEl.innerHTML = "";
+        groupEls.clear();
+        entryCount = 0;
         Object.keys(kindCounts).forEach((k) => (kindCounts[k] = 0));
         applyFilters();
+      });
+
+      // Click a group header to fold/unfold its children.
+      logsEl.addEventListener("click", (e) => {
+        const head = e.target.closest(".log-entry.head");
+        const group = head?.closest(".log-group.multi");
+        if (group) group.classList.toggle("collapsed");
       });
 
       logsEl.addEventListener("scroll", () => {
@@ -1294,6 +1378,8 @@
 
       socket.on("log:history", (entries) => {
         logsEl.innerHTML = "";
+        groupEls.clear();
+        entryCount = 0;
         Object.keys(kindCounts).forEach((k) => (kindCounts[k] = 0));
         entries.forEach((e) => addLog(e));
         applyFilters();

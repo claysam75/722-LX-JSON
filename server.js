@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Server } = require("socket.io");
 const http = require("http");
+const { AsyncLocalStorage } = require("async_hooks");
 const { sendOSC2, sendOSC } = require("./oscClient");
 const { getState, setState, getAllStates, loadState } = require("./state");
 const {
@@ -23,6 +24,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 app.use(bodyParser.json());
+app.use((req, res, next) => withLogGroup(next));
 app.use((req, res, next) => {
   const alias = TARGET_ALIASES[req.body?.Target];
   if (alias) {
@@ -43,9 +45,23 @@ function broadcastStateUpdate(target) {
 const LOG_HISTORY_MAX = 500;
 const logHistory = [];
 
+// Each HTTP request (and each socket connection) runs inside its own log
+// group so the GUI can cluster every line it produces — including async
+// ones like the external push failure — under the triggering event.
+const logContext = new AsyncLocalStorage();
+let nextLogGroup = 1;
+
+function withLogGroup(fn) {
+  return logContext.run({ group: nextLogGroup++ }, fn);
+}
+
 function log(message) {
   console.log(message);
-  const entry = { message, timestamp: new Date().toISOString() };
+  const entry = {
+    message,
+    timestamp: new Date().toISOString(),
+    group: logContext.getStore()?.group ?? null,
+  };
   logHistory.push(entry);
   if (logHistory.length > LOG_HISTORY_MAX) logHistory.shift();
   io.emit("log", entry);
@@ -92,7 +108,7 @@ io.on("connection", (socket) => {
   // Send history before logging the connection so the new client
   // doesn't receive its own "connected" line twice.
   socket.emit("log:history", logHistory);
-  log("New client connected");
+  withLogGroup(() => log("New client connected"));
   socket.emit("state:all", getAllStates());
 });
 

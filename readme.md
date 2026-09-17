@@ -234,7 +234,7 @@ Sets the intensity for a target. Setting intensity to `0` also sets the state to
 | -------------- | --------------- | --------------------------------------------------- |
 | `state:all`    | Server → Client | Array of all current states (emitted on connection) |
 | `state:update` | Server → Client | Single updated state object                         |
-| `log`          | Server → Client | `{ message, timestamp }`                            |
+| `log`          | Server → Client | `{ message, timestamp, group }` — `group` is shared by every line produced by one HTTP request or socket connection (`null` otherwise) |
 | `log:history`  | Server → Client | Array of the last 500 log entries (emitted on connection) |
 
 ---
