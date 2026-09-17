@@ -1047,9 +1047,27 @@ const INTENSITY_OSC_MAPPINGS = {
   },
 };
 
+// Extra scenes accepted only by the VESSEL target, on top of SCENES.
+// Value is the OSC address that fires the scene. Leave "" until known —
+// the server will record the scene but log a warning instead of sending OSC.
+const VESSEL_SCENE_OSC = {
+  ALL_ON: "/exec/2/181",
+  ALL_OFF: "/exec/2/182",
+  UNDERWAY: "/exec/2/183",
+  DOCK_GUESTS: "/exec/2/184",
+  DOCK_CREW: "/exec/2/185",
+  ANCHOR_GUESTS: "/exec/2/186",
+  ANCHOR_CREW: "/exec/2/187",
+  MAX_LIGHTING: "/exec/2/188",
+  HELI_OPS: "/exec/2/189",
+  PARTY: "/exec/2/190",
+};
+
 module.exports = {
   COLOUR_OSC_MAPPINGS,
   INTENSITY_OSC_MAPPINGS,
+  VESSEL_SCENE_OSC,
+  VESSEL_SCENES: Object.keys(VESSEL_SCENE_OSC),
   OSC_TARGET: "127.0.0.1",
   OSC_PORT: 8000,
 
@@ -1103,6 +1121,7 @@ module.exports = {
     "LOWER DECK WET AREA",
     "LD DOOR SPOTS",
     "VESSEL",
+    "LOWER DECK COURTESY",
   ],
 
   TOGGLE_TARGETS: [
@@ -1129,6 +1148,7 @@ module.exports = {
     "FIRE ALARM",
     "HULL DOOR",
     "LD DOOR SPOTS",
+    "LOWER DECK COURTESY",
   ],
 
   FEEDBACK_TARGETS: [
@@ -1150,6 +1170,7 @@ module.exports = {
     "MAIN DECK AFT STRIPS",
     "MAIN DECK COURTESY",
     "LD DOOR SPOTS",
+    "LOWER DECK COURTESY",
   ],
 
   COLOUR_INTENSITY_TARGETS: [
