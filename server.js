@@ -95,6 +95,47 @@ function syncLdDoorSpots() {
   }
 }
 
+// Colour executors on the Chamsys are toggles: firing one that is already
+// active deactivates it. When `reassert` is set the executor is fired twice
+// (deactivate, then activate) so the colour is re-applied to every fixture
+// in the zone. Returns false if there is no mapping for the request.
+function sendColourOSC(target, zone, colour, reassert) {
+  const oscAddress = COLOUR_OSC_MAPPINGS[target]?.[zone]?.[colour];
+  if (!oscAddress) {
+    log(`WARN: No OSC mapping for ${target} zone ${zone} colour ${colour}`);
+    return false;
+  }
+  if (reassert) {
+    sendOSC(oscAddress, []);
+    log(`OSC: ${target} zone ${zone} colour ${colour} deactivate → ${oscAddress}`);
+  }
+  sendOSC(oscAddress, []);
+  log(`OSC: ${target} zone ${zone} colour ${colour} → ${oscAddress}`);
+  return true;
+}
+
+// The hull-door "guest entrance ON" executor lights the fixture at the cue's
+// own colour rather than the colour the other name lights are currently
+// running. Re-assert the stored YACHT NAME colours so the guest entrance
+// name comes up matching the rest.
+function resyncYachtNameColours() {
+  const colours = getState("YACHT NAME")?.Colours || {};
+  const values = [];
+  for (let i = 1; i <= SUBZONE_COUNT; i++) values.push(colours[i]);
+  const isSet = (v) => v !== "" && v != null;
+
+  if (!values.some(isSet)) return;
+
+  if (values.every((v) => v == values[0])) {
+    sendColourOSC("YACHT NAME", 0, values[0], true);
+    return;
+  }
+
+  values.forEach((colour, idx) => {
+    if (isSet(colour)) sendColourOSC("YACHT NAME", idx + 1, colour, true);
+  });
+}
+
 function pushStateToExternal() {
   const payloads = FEEDBACK_TARGETS.flatMap(buildFeedbackPayloads);
   fetch("http://10.50.40.103/cws/dmxpc/state?payload=TypeA", {
@@ -386,6 +427,7 @@ app.post("/set", (req, res) => {
       lights["GUEST ENTRANCE"] = "ON";
       sendOSC("/exec/2/38", []);
       log("OSC: guest entrance name light ON (hull door opened)");
+      resyncYachtNameColours();
     } else {
       lights["GUEST ENTRANCE"] = "OFF";
       sendOSC("/exec/2/37", []);
@@ -560,23 +602,9 @@ app.post("/colour", (req, res) => {
 
   if (Target === "LOWER DECK WET AREA") syncLdDoorSpots();
 
-  const zonesToSend = [subzoneNum === 0 ? 0 : subzoneNum];
-
-  for (const zone of zonesToSend) {
-    const oscAddress = COLOUR_OSC_MAPPINGS[Target]?.[zone]?.[Colour];
-    if (oscAddress) {
-      if (existing[zone === 0 ? 1 : zone] == Colour) {
-        sendOSC(oscAddress, []);
-        log(
-          `OSC: ${Target} zone ${zone} colour ${Colour} deactivate → ${oscAddress}`,
-        );
-      }
-      sendOSC(oscAddress, []);
-      log(`OSC: ${Target} zone ${zone} colour ${Colour} → ${oscAddress}`);
-    } else {
-      log(`WARN: No OSC mapping for ${Target} zone ${zone} colour ${Colour}`);
-    }
-  }
+  const zone = subzoneNum;
+  const alreadyActive = existing[zone === 0 ? 1 : zone] == Colour;
+  sendColourOSC(Target, zone, Colour, alreadyActive);
 
   res.json({
     Target,
