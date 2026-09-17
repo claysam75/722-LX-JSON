@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DMX-PC Control</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Mirrors constants.js — keep in sync when targets/colours change.
+      const COLOUR_MAPPINGS = [
+        { index: 1, name: "Red", hex: "#FF0000" },
+        { index: 2, name: "Green", hex: "#00FF00" },
+        { index: 3, name: "Blue", hex: "#0000FF" },
+        { index: 4, name: "Yellow", hex: "#FFFF00" },
+        { index: 5, name: "Cyan", hex: "#00FFFF" },
+        { index: 6, name: "Magenta", hex: "#FF00FF" },
+        { index: 7, name: "White", hex: "#FFFFFF" },
+        { index: 8, name: "Warm White", hex: "#f4ddb3" },
+        { index: 9, name: "Orange", hex: "#FFA500" },
+        { index: 10, name: "Purple", hex: "#800080" },
+        { index: 11, name: "Pink", hex: "#FFC0CB" },
+        { index: 12, name: "Lime", hex: "#00FF00" },
+        { index: 13, name: "Teal", hex: "#008080" },
+        { index: 14, name: "Lavender", hex: "#E6E6FA" },
+        { index: 15, name: "Turquoise", hex: "#40E0D0" },
+      ];
+      const COLOUR_COUNT = 20;
+      const COLOUR_LOOKUP = Object.fromEntries(
+        COLOUR_MAPPINGS.map((c) => [c.index, c]),
+      );
+
+      const INTENSITIES = ["100", "75", "50", "25", "0"];
+      const SUBZONE_COUNT = 4;
+      const SCENES = ["ON", "DIM", "NIGHT", "OFF"];
+      const VESSEL_SCENES = [
+        "ALL_ON",
+        "ALL_OFF",
+        "UNDERWAY",
+        "DOCK_GUESTS",
+        "DOCK_CREW",
+        "ANCHOR_GUESTS",
+        "ANCHOR_CREW",
+        "MAX_LIGHTING",
+        "HELI_OPS",
+        "PARTY",
+      ];
+
+      const TOGGLE_TARGETS = [
+        "POOL",
+        "WHIRLPOOL",
+        "YACHT NAME",
+        "UNDERWATER ALL",
+        "UNDERWATER STERN",
+        "UNDERWATER AFT PS",
+        "UNDERWATER AFT SB",
+        "UNDERWATER MID PS",
+        "UNDERWATER MID SB",
+        "UNDERWATER FWD",
+        "UNDERWATER UP BOW",
+      ];
+
+      // ON/OFF via POST /set (FIRE ALARM and HULL DOOR handled as status cards)
+      const SET_TARGETS = [
+        "SUN DECK FWD SPOTS",
+        "SUN DECK FWD STRIPS",
+        "MAIN DECK AFT SPOTS POOL AND TABLE",
+        "MAIN DECK AFT SPOTS",
+        "MAIN DECK AFT STRIPS",
+        "MAIN DECK COURTESY",
+        "LD DOOR SPOTS",
+        "LOWER DECK COURTESY",
+      ];
+
+      const SCENE_TARGETS = [
+        "SUN DECK EXTERIOR FWD",
+        "MAIN DECK EXTERIOR AFT",
+        "LOWER DECK WET AREA",
+        "VESSEL",
+      ];
+
+      const COLOUR_INTENSITY_TARGETS = [
+        "POOL",
+        "WHIRLPOOL",
+        "YACHT NAME",
+        "UNDERWATER ALL",
+        "SUN DECK EXTERIOR FWD",
+        "MAIN DECK EXTERIOR AFT",
+        "LOWER DECK WET AREA",
+      ];
+
+      const STATUS_TARGETS = ["FIRE ALARM", "HULL DOOR", "VESSEL"];
+      const EVENT_MODE_TARGETS = [
+        "EVENT MODE SD",
+        "EVENT MODE MD",
+        "EVENT MODE LD",
+        "EVENT MODE UW",
+      ];
+
+      const DECK_GROUPS = [
+        { label: "Sun Deck", test: (t) => t.startsWith("SUN DECK") || t === "WHIRLPOOL" },
+        { label: "Main Deck", test: (t) => t.startsWith("MAIN DECK") || ["POOL", "YACHT NAME"].includes(t) },
+        { label: "Lower Deck", test: (t) => t.startsWith("LOWER DECK") || t.startsWith("LD ") },
+        { label: "Underwater", test: (t) => t.startsWith("UNDERWATER") },
+      ];
+    </script>
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+
+      :root {
+        --bg: #0e0e0e;
+        --text: #e0e0e0;
+        --text-dim: #888;
+        --text-muted: #666;
+        --text-faint: #555;
+        --divider: #222;
+        --card-bg: #1a1a1a;
+        --card-border: #2a2a2a;
+        --card-border-alt: #242424;
+        --slot-bg: #111;
+        --slot-border: #222;
+        --slot-label: #444;
+        --track-bg: #1e1e1e;
+        --log-bg: #141414;
+        --log-divider: #1a1a1a;
+        --log-time: #383838;
+        --badge-off-bg: #222;
+        --badge-off-text: #555;
+        --btn-bg: #161616;
+        --btn-hover: #222;
+        --on-bg: #1a2e1a; --on-border: #2a5a2a; --on-strong: #7acc7a;
+        --dim-bg: #2a2a1a; --dim-border: #555522; --dim-strong: #aaaa55;
+        --night-bg: #1a1e2e; --night-border: #2a3a5a; --night-strong: #6688cc;
+        --warn-bg: #2a2000; --warn-border: #997700; --warn-strong: #ffcc22;
+        --alarm-bg: #2a0a0a; --alarm-border: #880000; --alarm-strong: #ff5555;
+        --err: #ff6666;
+        --client: #5599cc;
+        --feedback: #9977cc;
+      }
+
+      :root[data-theme="light"] {
+        --bg: #f0f2f5;
+        --text: #1a1a1a;
+        --text-dim: #666;
+        --text-muted: #888;
+        --text-faint: #aaa;
+        --divider: #ddd;
+        --card-bg: #ffffff;
+        --card-border: #e0e0e0;
+        --card-border-alt: #e5e5e5;
+        --slot-bg: #f5f5f5;
+        --slot-border: #e8e8e8;
+        --slot-label: #bbb;
+        --track-bg: #e8e8e8;
+        --log-bg: #ffffff;
+        --log-divider: #f0f0f0;
+        --log-time: #ccc;
+        --badge-off-bg: #f0f0f0;
+        --badge-off-text: #bbb;
+        --btn-bg: #f7f7f7;
+        --btn-hover: #ececec;
+        --on-bg: #e8f5e8; --on-border: #88cc88; --on-strong: #2a7a2a;
+        --dim-bg: #f5f5de; --dim-border: #aaaa44; --dim-strong: #777700;
+        --night-bg: #eaecf8; --night-border: #8899cc; --night-strong: #3355aa;
+        --warn-bg: #fff6d6; --warn-border: #d4aa22; --warn-strong: #8a6a00;
+        --alarm-bg: #ffe8e8; --alarm-border: #dd6666; --alarm-strong: #b00000;
+        --err: #cc2222;
+        --client: #2266aa;
+        --feedback: #6a44aa;
+      }
+
+      body {
+        margin: 0;
+        padding: 16px 20px 32px;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      /* ── Header ──────────────────────────────────────── */
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      .conn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+      }
+      .conn-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--slot-label);
+      }
+      .conn.online .conn-dot { background: #3a9a3a; box-shadow: 0 0 5px #3a9a3a; }
+      .conn.online { color: var(--on-strong); }
+      .conn.offline .conn-dot { background: var(--alarm-strong); }
+      .conn.offline { color: var(--alarm-strong); }
+
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .header-right a {
+        font-size: 11px;
+        color: var(--text-dim);
+        text-decoration: none;
+      }
+      .header-right a:hover { color: var(--text); }
+
+      .theme-toggle {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-dim);
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+
+      /* ── Layout ──────────────────────────────────────── */
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 440px;
+        gap: 20px;
+        align-items: start;
+      }
+
+      @media (max-width: 1150px) {
+        .layout { grid-template-columns: 1fr; }
+        .log-pane { position: static !important; height: 380px !important; }
+      }
+
+      .section { margin-bottom: 24px; }
+
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--divider);
+      }
+
+      /* ── Buttons ─────────────────────────────────────── */
+
+      .btn {
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 4px;
+        border: 1px solid var(--card-border);
+        background: var(--btn-bg);
+        color: var(--text-dim);
+        cursor: pointer;
+        line-height: 1.4;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+      }
+      .btn:hover { background: var(--btn-hover); color: var(--text); border-color: var(--text-muted); }
+      .btn:active { transform: translateY(1px); }
+      .btn:disabled { opacity: 0.45; cursor: default; }
+
+      .btn.is-on    { background: var(--on-bg);    border-color: var(--on-border);    color: var(--on-strong); }
+      .btn.is-dim   { background: var(--dim-bg);   border-color: var(--dim-border);   color: var(--dim-strong); }
+      .btn.is-night { background: var(--night-bg); border-color: var(--night-border); color: var(--night-strong); }
+      .btn.is-off   { background: var(--badge-off-bg); border-color: var(--text-faint); color: var(--text); }
+      .btn.is-warn  { background: var(--warn-bg);  border-color: var(--warn-border);  color: var(--warn-strong); }
+      .btn.is-alarm { background: var(--alarm-bg); border-color: var(--alarm-border); color: var(--alarm-strong); }
+      .btn.is-active { background: var(--track-bg); border-color: var(--text-muted); color: var(--text); }
+
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--card-border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .seg .btn {
+        border: none;
+        border-radius: 0;
+        border-right: 1px solid var(--card-border);
+        padding: 3px 8px;
+      }
+      .seg .btn:last-child { border-right: none; }
+
+      .busy { opacity: 0.6; pointer-events: none; }
+
+      /* ── Status cards ────────────────────────────────── */
+
+      #status-grid, #event-mode-grid {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .status-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        min-width: 200px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+      .status-card.wide { flex: 1 1 100%; }
+
+      .status-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--slot-label);
+      }
+
+      .status-name {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        flex: 1;
+      }
+
+      .status-value {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .status-card.alarm-silent .status-dot { background: #3a9a3a; box-shadow: 0 0 4px #3a9a3a; }
+      .status-card.alarm-silent .status-value { color: #5a9a5a; }
+      .status-card.alarm-sounding { background: var(--alarm-bg); border-color: var(--alarm-border); }
+      .status-card.alarm-sounding .status-dot {
+        background: #ff3333;
+        box-shadow: 0 0 8px #ff3333;
+        animation: flash-alarm 1.4s ease-in-out infinite;
+      }
+      .status-card.alarm-sounding .status-value { color: var(--alarm-strong); }
+
+      @keyframes flash-alarm {
+        0%, 100% { opacity: 1; box-shadow: 0 0 8px #ff3333; }
+        50%       { opacity: 0.1; box-shadow: none; }
+      }
+
+      .status-card.door-closed .status-dot { background: #2a6a2a; }
+      .status-card.door-closed .status-value { color: #5a9a5a; }
+      .status-card.door-open { background: var(--warn-bg); border-color: var(--warn-border); }
+      .status-card.door-open .status-dot { background: #ddaa00; }
+      .status-card.door-open .status-value { color: var(--warn-strong); }
+
+      .status-card.status-on { background: var(--on-bg); border-color: var(--on-border); }
+      .status-card.status-on .status-dot { background: #3a9a3a; }
+      .status-card.status-on .status-value { color: var(--on-strong); }
+      .status-card.vessel-dim { background: var(--dim-bg); border-color: var(--dim-border); }
+      .status-card.vessel-dim .status-dot { background: var(--dim-strong); }
+      .status-card.vessel-dim .status-value { color: var(--dim-strong); }
+      .status-card.vessel-night { background: var(--night-bg); border-color: var(--night-border); }
+      .status-card.vessel-night .status-dot { background: var(--night-strong); }
+      .status-card.vessel-night .status-value { color: var(--night-strong); }
+
+      .status-card.event-on { background: var(--warn-bg); border-color: var(--warn-border); }
+      .status-card.event-on .status-name { color: var(--warn-strong); }
+      .status-card.event-on .status-value { color: var(--warn-strong); }
+
+      .sub-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--slot-label);
+        margin-right: 4px;
+        align-self: center;
+      }
+
+      /* ── Lighting grid ───────────────────────────────── */
+
+      #lighting-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        align-items: start;
+        gap: 8px;
+      }
+
+      .row-label {
+        grid-column: 1 / -1;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--slot-label);
+        padding: 8px 0 4px;
+        border-bottom: 1px solid var(--divider);
+        margin-top: 4px;
+      }
+      .row-label:first-child { margin-top: 0; }
+
+      .card {
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border-alt);
+        font-size: 11px;
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: background 0.2s, border-color 0.2s;
+      }
+      .card.wide { grid-column: span 2; }
+      @media (max-width: 560px) { .card.wide { grid-column: span 1; } }
+
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .card-head strong {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 2px 7px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        background: var(--badge-off-bg);
+        color: var(--badge-off-text);
+        white-space: nowrap;
+      }
+
+      .card.on    { background: var(--on-bg);    border-color: var(--on-border); }
+      .card.on    .card-head strong { color: var(--on-strong); }
+      .card.on    .badge { background: rgba(0,0,0,0.15); color: var(--on-strong); }
+      .card.dim   { background: var(--dim-bg);   border-color: var(--dim-border); }
+      .card.dim   .card-head strong { color: var(--dim-strong); }
+      .card.dim   .badge { background: rgba(0,0,0,0.15); color: var(--dim-strong); }
+      .card.night { background: var(--night-bg); border-color: var(--night-border); }
+      .card.night .card-head strong { color: var(--night-strong); }
+      .card.night .badge { background: rgba(0,0,0,0.15); color: var(--night-strong); }
+      .card.off   .card-head strong { color: var(--text-faint); }
+
+      .card-detail { color: var(--text-muted); font-size: 10px; }
+
+      .ctrl-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      /* ── Colour / intensity controls ─────────────────── */
+
+      .ci { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid var(--slot-border); }
+      .ci-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .ci-row .sub-label { min-width: 36px; }
+
+      .swatches { display: flex; flex-wrap: wrap; gap: 3px; }
+      .swatch {
+        width: 18px; height: 18px;
+        border-radius: 4px;
+        border: 1px solid rgba(0,0,0,0.45);
+        cursor: pointer;
+        padding: 0;
+        font-size: 8px;
+        font-weight: 700;
+        color: var(--text-muted);
+        background: var(--slot-bg);
+        line-height: 1;
+        transition: transform 0.1s;
+      }
+      .swatch:hover { transform: scale(1.15); }
+      .swatch.active { outline: 2px solid var(--text); outline-offset: 1px; }
+
+      .subzone-strip, .intensity-strip { display: flex; gap: 4px; }
+      .subzone-slot, .intensity-slot {
+        flex: 1;
+        border-radius: 4px;
+        padding: 4px 4px 3px;
+        background: var(--slot-bg);
+        border: 1px solid var(--slot-border);
+        text-align: center;
+        cursor: pointer;
+      }
+      .subzone-slot.selected, .intensity-slot.selected { border-color: var(--text-muted); }
+      .subzone-label, .intensity-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--slot-label);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .subzone-swatch {
+        display: block;
+        width: 100%;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--track-bg);
+        border: 1px solid var(--slot-border);
+      }
+      .subzone-slot.has-colour .subzone-label { color: var(--text-muted); }
+      .subzone-slot.has-colour .subzone-swatch { border-color: rgba(0,0,0,0.3); }
+
+      .intensity-bar-track {
+        width: 100%; height: 6px;
+        background: var(--track-bg);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 3px;
+      }
+      .intensity-bar-fill { height: 100%; border-radius: 3px; background: #4a7a4a; transition: width 0.2s; }
+      .intensity-value { font-size: 9px; color: var(--slot-label); display: block; }
+      .intensity-slot.has-intensity .intensity-label { color: var(--text-muted); }
+      .intensity-slot.has-intensity .intensity-bar-fill { background: #5acc5a; }
+      .intensity-slot.has-intensity .intensity-value { color: var(--text-dim); }
+
+      /* ── Yacht name lights ───────────────────────────── */
+
+      .name-lights { display: flex; flex-direction: column; gap: 4px; }
+      .name-light-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        background: var(--slot-bg);
+        border: 1px solid var(--slot-border);
+      }
+      .name-light-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--slot-label); }
+      .name-light-row.name-on .name-light-dot { background: #3a9a3a; box-shadow: 0 0 5px #3a9a3a88; }
+      .name-light-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        flex: 1;
+        text-transform: uppercase;
+      }
+      .name-light-row.name-on .name-light-label { color: var(--text); }
+      .name-light-row .auto { font-size: 9px; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+
+      /* ── Log pane ────────────────────────────────────── */
+
+      .log-pane {
+        position: sticky;
+        top: 16px;
+        height: calc(100vh - 32px);
+        display: flex;
+        flex-direction: column;
+        background: var(--log-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .log-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--card-border);
+        background: var(--card-bg);
+      }
+      .log-toolbar-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .log-title {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        flex: 1;
+      }
+
+      .log-search {
+        flex: 1;
+        min-width: 120px;
+        font-family: monospace;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--card-border);
+        background: var(--slot-bg);
+        color: var(--text);
+        outline: none;
+      }
+      .log-search:focus { border-color: var(--text-muted); }
+
+      .chip {
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+        background: var(--btn-bg);
+        color: var(--text-faint);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: line-through;
+      }
+      .chip .count {
+        font-size: 9px;
+        padding: 0 5px;
+        border-radius: 8px;
+        background: var(--badge-off-bg);
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+      .chip.on { text-decoration: none; color: var(--text-dim); border-color: var(--text-faint); }
+      .chip.on[data-filter="feedback"] { color: var(--feedback); border-color: var(--feedback); }
+      .chip.on[data-filter="client"]   { color: var(--client);   border-color: var(--client); }
+      .chip.on[data-filter="osc"]      { color: var(--on-strong); border-color: var(--on-border); }
+
+      #logs {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 12px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+
+      .log-entry {
+        padding: 2px 0;
+        border-bottom: 1px solid var(--log-divider);
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .log-entry:last-child { border-bottom: none; }
+      .log-entry:hover { white-space: normal; word-break: break-word; }
+      .log-time { color: var(--log-time); margin-right: 8px; user-select: none; }
+      .log-msg { color: var(--text-dim); }
+      .log-entry.warn .log-msg  { color: #cc8800; }
+      .log-entry.error .log-msg { color: var(--err); }
+      .log-entry[data-kind="client"]   .log-msg { color: var(--client); }
+      .log-entry[data-kind="feedback"] .log-msg { color: var(--feedback); }
+      .log-entry[data-kind="osc"]      .log-msg { color: var(--on-strong); opacity: 0.85; }
+      .log-entry.search-miss { display: none; }
+      #logs.hide-feedback .log-entry[data-kind="feedback"] { display: none; }
+      #logs.hide-client   .log-entry[data-kind="client"]   { display: none; }
+      #logs.hide-osc      .log-entry[data-kind="osc"]      { display: none; }
+
+      .log-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-top: 1px solid var(--card-border);
+        background: var(--card-bg);
+        font-size: 10px;
+        color: var(--text-faint);
+        letter-spacing: 0.04em;
+      }
+      .log-footer .spacer { flex: 1; }
+      #jump-latest[hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="page-header">
+      <h1>DMX-PC Control</h1>
+      <div class="conn" id="conn"><span class="conn-dot"></span><span id="conn-text">Connecting…</span></div>
+      <div class="header-right">
+        <a href="/index.html">Live State</a>
+        <a href="/diagrams.html" target="_blank">Debug Ref ↗</a>
+        <button class="theme-toggle" id="theme-toggle"></button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panels">
+        <div class="section">
+          <div class="section-label">Status</div>
+          <div id="status-grid"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Event Mode</div>
+          <div id="event-mode-grid"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Lighting</div>
+          <div id="lighting-grid"></div>
+        </div>
+      </div>
+
+      <aside class="log-pane">
+        <div class="log-toolbar">
+          <div class="log-toolbar-row">
+            <span class="log-title">Log</span>
+            <input class="log-search" id="log-search" type="search" placeholder="Filter text…" />
+            <button class="btn" id="log-clear">Clear</button>
+          </div>
+          <div class="log-toolbar-row">
+            <button class="chip on" data-filter="feedback">Feedback <span class="count">0</span></button>
+            <button class="chip on" data-filter="client">Clients <span class="count">0</span></button>
+            <button class="chip on" data-filter="osc">OSC <span class="count">0</span></button>
+          </div>
+        </div>
+        <div id="logs"></div>
+        <div class="log-footer">
+          <span id="log-count">0 entries</span>
+          <span class="spacer"></span>
+          <button class="btn" id="jump-latest" hidden>↓ Latest</button>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      /* ── Theme ───────────────────────────────────────── */
+
+      const themeToggle = document.getElementById("theme-toggle");
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.textContent = theme === "light" ? "Dark" : "Light";
+        try { localStorage.setItem("theme", theme); } catch {}
+      }
+      let savedTheme = "dark";
+      try { savedTheme = localStorage.getItem("theme") || "dark"; } catch {}
+      applyTheme(savedTheme);
+      themeToggle.addEventListener("click", () => {
+        applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+      });
+
+      /* ── State ───────────────────────────────────────── */
+
+      const socket = io();
+      const stateMap = {};
+      const cardEls = new Map();      // target → element currently in the DOM
+      const uiSubzone = {};           // target → selected subzone (0 = all)
+
+      const statusGrid   = document.getElementById("status-grid");
+      const eventGrid    = document.getElementById("event-mode-grid");
+      const lightingGrid = document.getElementById("lighting-grid");
+      const connEl       = document.getElementById("conn");
+      const connText     = document.getElementById("conn-text");
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        })[c]);
+      }
+
+      /* ── Requests ────────────────────────────────────── */
+
+      async function fire(endpoint, body, cardEl) {
+        cardEl?.classList.add("busy");
+        const summary = `POST /${endpoint} ${JSON.stringify(body)}`;
+        try {
+          const res = await fetch(`/${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            addLog({ message: `ERROR ${res.status} ${summary} → ${data.error || "request failed"}`, timestamp: new Date().toISOString() }, "error");
+          }
+        } catch (e) {
+          addLog({ message: `ERROR ${summary} → ${e.message}`, timestamp: new Date().toISOString() }, "error");
+        } finally {
+          cardEl?.classList.remove("busy");
+        }
+      }
+
+      document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const { action, target } = btn.dataset;
+        const card = btn.closest(".card, .status-card");
+
+        switch (action) {
+          case "toggle":
+            fire("toggle", { Target: target }, card);
+            break;
+          case "set":
+            fire("set", { Target: target, State: btn.dataset.state, ...(btn.dataset.info ? { Info: btn.dataset.info } : {}) }, card);
+            break;
+          case "scene":
+            fire("scene", { Target: target, Scene: btn.dataset.scene }, card);
+            break;
+          case "eventmode":
+            fire("eventmode", { Target: target, State: btn.dataset.state }, card);
+            break;
+          case "colour":
+            fire("colour", { Target: target, Subzone: uiSubzone[target] ?? 0, Colour: parseInt(btn.dataset.colour, 10) }, card);
+            break;
+          case "intensity":
+            fire("intensity", { Target: target, Subzone: uiSubzone[target] ?? 0, Intensity: btn.dataset.intensity }, card);
+            break;
+          case "subzone":
+            uiSubzone[target] = parseInt(btn.dataset.subzone, 10);
+            renderTarget(target);
+            break;
+        }
+      });
+
+      /* ── Class helpers ───────────────────────────────── */
+
+      function sceneClass(scene) {
+        const s = (scene || "").toUpperCase();
+        if (s === "ON")    return "on";
+        if (s === "DIM")   return "dim";
+        if (s === "NIGHT") return "night";
+        return "off";
+      }
+
+      function lightingClass(item) {
+        if (item.Target === "YACHT NAME") {
+          return Object.values(item.Lights || {}).some((v) => v === "ON") ? "on" : "off";
+        }
+        if (SCENE_TARGETS.includes(item.Target) && item.Scene && item.Scene !== "OFF") {
+          return sceneClass(item.Scene);
+        }
+        return (item.State || "").toUpperCase() === "ON" ? "on" : "off";
+      }
+
+      function statusCardClass(item) {
+        const { Target, State, Scene } = item;
+        if (Target === "FIRE ALARM") return State === "SOUNDING" ? "alarm-sounding" : "alarm-silent";
+        if (Target === "HULL DOOR")  return State === "OPEN" ? "door-open" : "door-closed";
+        if (Target === "VESSEL") {
+          const s = (Scene || "").toUpperCase();
+          if (s === "DIM")   return "vessel-dim";
+          if (s === "NIGHT") return "vessel-night";
+          if (s === "" || s === "OFF" || s === "ALL_OFF") return "status-off";
+          return "status-on";
+        }
+        return (State || "").toUpperCase() === "ON" ? "status-on" : "status-off";
+      }
+
+      /* ── Control fragments ───────────────────────────── */
+
+      function onOffButtons(action, target, current, extraAttrs = "") {
+        const cur = (current || "").toUpperCase();
+        return `<div class="btn-row">
+          <button class="btn${cur === "ON" ? " is-on" : ""}" data-action="${action}" data-target="${esc(target)}" data-state="ON" ${extraAttrs}>On</button>
+          <button class="btn${cur === "OFF" ? " is-off" : ""}" data-action="${action}" data-target="${esc(target)}" data-state="OFF" ${extraAttrs}>Off</button>
+        </div>`;
+      }
+
+      function sceneButtons(target, current) {
+        const cur = (current || "").toUpperCase();
+        return `<div class="btn-row">${SCENES.map((s) =>
+          `<button class="btn${cur === s ? " is-" + s.toLowerCase() : ""}" data-action="scene" data-target="${esc(target)}" data-scene="${s}">${s}</button>`
+        ).join("")}</div>`;
+      }
+
+      function vesselSceneButtons(current) {
+        const cur = (current || "").toUpperCase();
+        return `<div class="btn-row">${VESSEL_SCENES.map((s) =>
+          `<button class="btn${cur === s ? " is-active" : ""}" data-action="scene" data-target="VESSEL" data-scene="${s}">${s.replace(/_/g, " ")}</button>`
+        ).join("")}</div>`;
+      }
+
+      function uniformValue(map, subzone) {
+        if (!map) return null;
+        if (subzone !== 0) return map[subzone] ?? null;
+        const vals = [];
+        for (let i = 1; i <= SUBZONE_COUNT; i++) vals.push(map[i]);
+        return vals.every((v) => String(v) === String(vals[0])) ? vals[0] : null;
+      }
+
+      function subzoneStripHTML(target, colours, selected) {
+        let html = '<div class="subzone-strip">';
+        for (let i = 1; i <= SUBZONE_COUNT; i++) {
+          const idx = colours?.[i];
+          const c = idx ? COLOUR_LOOKUP[idx] : null;
+          const title = c ? `${idx} ${c.name}` : idx ? `Colour ${idx}` : "—";
+          html += `
+            <div class="subzone-slot${idx ? " has-colour" : ""}${selected === i ? " selected" : ""}"
+                 title="Subzone ${i}: ${title}" data-action="subzone" data-target="${esc(target)}" data-subzone="${i}">
+              <span class="subzone-label">${i}</span>
+              <span class="subzone-swatch" style="${c ? `background:${c.hex}` : ""}"></span>
+            </div>`;
+        }
+        return html + "</div>";
+      }
+
+      function intensityStripHTML(target, intensities, selected) {
+        let html = '<div class="intensity-strip">';
+        for (let i = 1; i <= SUBZONE_COUNT; i++) {
+          const val = intensities?.[i];
+          const pct = val !== "" && val !== undefined && val !== null ? parseInt(val, 10) : null;
+          const has = pct !== null && pct > 0;
+          html += `
+            <div class="intensity-slot${has ? " has-intensity" : ""}${selected === i ? " selected" : ""}"
+                 title="Subzone ${i}: ${pct !== null ? pct + "%" : "—"}" data-action="subzone" data-target="${esc(target)}" data-subzone="${i}">
+              <span class="intensity-label">${i}</span>
+              <div class="intensity-bar-track"><div class="intensity-bar-fill" style="width:${pct ?? 0}%"></div></div>
+              <span class="intensity-value">${pct !== null ? pct + "%" : "—"}</span>
+            </div>`;
+        }
+        return html + "</div>";
+      }
+
+      function colourIntensityHTML(item) {
+        const t = item.Target;
+        const sel = uiSubzone[t] ?? 0;
+        const activeColour = uniformValue(item.Colours, sel);
+        const activeIntensity = uniformValue(item.Intensities, sel);
+
+        const zoneSeg = `<div class="seg">${[0, 1, 2, 3, 4].map((z) =>
+          `<button class="btn${sel === z ? " is-active" : ""}" data-action="subzone" data-target="${esc(t)}" data-subzone="${z}">${z === 0 ? "All" : z}</button>`
+        ).join("")}</div>`;
+
+        let swatches = "";
+        for (let i = 1; i <= COLOUR_COUNT; i++) {
+          const c = COLOUR_LOOKUP[i];
+          const active = activeColour != null && String(activeColour) === String(i);
+          swatches += `<button class="swatch${active ? " active" : ""}" title="${i}${c ? " " + c.name : ""}"
+            style="${c ? `background:${c.hex}` : ""}" data-action="colour" data-target="${esc(t)}" data-colour="${i}">${c ? "" : i}</button>`;
+        }
+
+        const levels = `<div class="btn-row">${INTENSITIES.map((v) =>
+          `<button class="btn${String(activeIntensity) === v ? " is-active" : ""}" data-action="intensity" data-target="${esc(t)}" data-intensity="${v}">${v}%</button>`
+        ).join("")}</div>`;
+
+        return `<div class="ci">
+          ${subzoneStripHTML(t, item.Colours, sel)}
+          ${intensityStripHTML(t, item.Intensities, sel)}
+          <div class="ci-row"><span class="sub-label">Zone</span>${zoneSeg}</div>
+          <div class="ci-row"><span class="sub-label">Colour</span><div class="swatches">${swatches}</div></div>
+          <div class="ci-row"><span class="sub-label">Level</span>${levels}</div>
+        </div>`;
+      }
+
+      function yachtNameHTML(item) {
+        const lights = item.Lights || {};
+        const rows = [
+          { key: "UD SB",          label: "UD SB",          info: "UD SB" },
+          { key: "HULL DOOR",      label: "Hull Door",      info: "HULL DOOR" },
+          { key: "GUEST ENTRANCE", label: "Guest Entrance", info: null },
+        ].map(({ key, label, info }) => {
+          const on = lights[key] === "ON";
+          const ctrl = info
+            ? onOffButtons("set", "YACHT NAME", lights[key], `data-info="${info}"`)
+            : `<span class="auto" title="Follows hull door">auto · ${lights[key] || "OFF"}</span>`;
+          return `<div class="name-light-row${on ? " name-on" : ""}">
+            <span class="name-light-dot"></span>
+            <span class="name-light-label">${label}</span>
+            ${ctrl}
+          </div>`;
+        }).join("");
+        return `<div class="name-lights">${rows}</div>`;
+      }
+
+      /* ── Card builders ───────────────────────────────── */
+
+      function buildStatusCard(item) {
+        const t = item.Target;
+        const div = document.createElement("div");
+        div.dataset.target = t;
+        div.className = "status-card " + statusCardClass(item);
+
+        let value, controls = "";
+        if (t === "FIRE ALARM") {
+          value = item.State || "—";
+          const cur = item.State;
+          controls = `<div class="btn-row">
+            <button class="btn${cur === "SILENT" ? " is-on" : ""}" data-action="set" data-target="FIRE ALARM" data-state="SILENT">Silent</button>
+            <button class="btn${cur === "SOUNDING" ? " is-alarm" : ""}" data-action="set" data-target="FIRE ALARM" data-state="SOUNDING">Sounding</button>
+          </div>`;
+        } else if (t === "HULL DOOR") {
+          value = item.State || "—";
+          const cur = item.State;
+          controls = `<div class="btn-row">
+            <button class="btn${cur === "OPEN" ? " is-warn" : ""}" data-action="set" data-target="HULL DOOR" data-state="OPEN">Open</button>
+            <button class="btn${cur === "CLOSED" ? " is-on" : ""}" data-action="set" data-target="HULL DOOR" data-state="CLOSED">Closed</button>
+          </div>`;
+        } else if (t === "VESSEL") {
+          div.classList.add("wide");
+          value = (item.Scene || item.State || "—").replace(/_/g, " ");
+          controls = `<div class="ctrl-row"><span class="sub-label">Scene</span>${sceneButtons("VESSEL", item.Scene)}</div>
+            <div class="ctrl-row"><span class="sub-label">Preset</span>${vesselSceneButtons(item.Scene)}</div>`;
+        } else {
+          value = item.State || "—";
+        }
+
+        div.innerHTML = `
+          <div class="status-head">
+            <div class="status-dot"></div>
+            <span class="status-name">${esc(t)}</span>
+            <span class="status-value">${esc(value)}</span>
+          </div>
+          ${controls}`;
+        return div;
+      }
+
+      function buildEventCard(item) {
+        const t = item.Target;
+        const on = item.State === "ON";
+        const div = document.createElement("div");
+        div.dataset.target = t;
+        div.className = "status-card " + (on ? "event-on" : "status-off");
+        div.innerHTML = `
+          <div class="status-head">
+            <span class="status-name">${esc(t.replace("EVENT MODE ", ""))}</span>
+            <span class="status-value">${esc(item.State || "—")}</span>
+          </div>
+          ${onOffButtons("eventmode", t, item.State)}`;
+        return div;
+      }
+
+      function buildLightingCard(item) {
+        const t = item.Target;
+        const div = document.createElement("div");
+        div.dataset.target = t;
+        div.className = "card " + lightingClass(item);
+
+        const isCI = COLOUR_INTENSITY_TARGETS.includes(t);
+        if (isCI) div.classList.add("wide");
+
+        const badge = SCENE_TARGETS.includes(t)
+          ? (item.Scene || item.State || "—")
+          : (item.State || "—");
+
+        let html = `<div class="card-head"><strong>${esc(t)}</strong><span class="badge">${esc(badge)}</span></div>`;
+        if (item.Info) html += `<span class="card-detail">Info: ${esc(item.Info)}</span>`;
+        if (SCENE_TARGETS.includes(t) && item.State && item.Scene) {
+          html += `<span class="card-detail">State: ${esc(item.State)}</span>`;
+        }
+
+        if (t === "YACHT NAME") html += yachtNameHTML(item);
+
+        const ctrls = [];
+        if (TOGGLE_TARGETS.includes(t)) {
+          ctrls.push(`<button class="btn" data-action="toggle" data-target="${esc(t)}">${t === "YACHT NAME" ? "Toggle all" : "Toggle"}</button>`);
+        }
+        if (SET_TARGETS.includes(t)) ctrls.push(onOffButtons("set", t, item.State));
+        if (SCENE_TARGETS.includes(t)) ctrls.push(`<span class="sub-label">Scene</span>${sceneButtons(t, item.Scene)}`);
+        if (ctrls.length) html += `<div class="ctrl-row">${ctrls.join("")}</div>`;
+
+        if (isCI) html += colourIntensityHTML(item);
+
+        div.innerHTML = html;
+        return div;
+      }
+
+      function buildCard(item) {
+        if (STATUS_TARGETS.includes(item.Target)) return buildStatusCard(item);
+        if (EVENT_MODE_TARGETS.includes(item.Target)) return buildEventCard(item);
+        return buildLightingCard(item);
+      }
+
+      /* ── Render ──────────────────────────────────────── */
+
+      function renderAll() {
+        statusGrid.innerHTML = "";
+        eventGrid.innerHTML = "";
+        lightingGrid.innerHTML = "";
+        cardEls.clear();
+
+        STATUS_TARGETS.map((t) => stateMap[t]).filter(Boolean).forEach((item) => {
+          const el = buildCard(item);
+          cardEls.set(item.Target, el);
+          statusGrid.appendChild(el);
+        });
+
+        EVENT_MODE_TARGETS.map((t) => stateMap[t]).filter(Boolean).forEach((item) => {
+          const el = buildCard(item);
+          cardEls.set(item.Target, el);
+          eventGrid.appendChild(el);
+        });
+
+        const lighting = Object.values(stateMap).filter(
+          (i) => !STATUS_TARGETS.includes(i.Target) && !EVENT_MODE_TARGETS.includes(i.Target),
+        );
+        const placed = new Set();
+        const groups = [...DECK_GROUPS, { label: "Other", test: (t) => !placed.has(t) }];
+
+        groups.forEach(({ label, test }) => {
+          const items = lighting.filter((i) => !placed.has(i.Target) && test(i.Target));
+          if (!items.length) return;
+          const header = document.createElement("div");
+          header.className = "row-label";
+          header.textContent = label;
+          lightingGrid.appendChild(header);
+          items.forEach((item) => {
+            placed.add(item.Target);
+            const el = buildCard(item);
+            cardEls.set(item.Target, el);
+            lightingGrid.appendChild(el);
+          });
+        });
+      }
+
+      function renderTarget(target) {
+        const item = stateMap[target];
+        if (!item) return;
+        const existing = cardEls.get(target);
+        if (!existing) return renderAll();
+        const fresh = buildCard(item);
+        existing.replaceWith(fresh);
+        cardEls.set(target, fresh);
+      }
+
+      /* ── Log pane ────────────────────────────────────── */
+
+      const logsEl     = document.getElementById("logs");
+      const logSearch  = document.getElementById("log-search");
+      const logCount   = document.getElementById("log-count");
+      const jumpLatest = document.getElementById("jump-latest");
+      const chips      = [...document.querySelectorAll(".chip[data-filter]")];
+      const MAX_LOG_DOM = 1500;
+
+      let filters = { feedback: true, client: true, osc: true };
+      try { filters = { ...filters, ...JSON.parse(localStorage.getItem("control-log-filters") || "{}") }; } catch {}
+      let searchTerm = "";
+      let follow = true;
+      const kindCounts = { feedback: 0, client: 0, osc: 0 };
+
+      function classify(message) {
+        if (message.startsWith("New client connected")) return "client";
+        if (message.startsWith("State feedback request") || message.startsWith("WARN: External state push failed")) return "feedback";
+        if (message.startsWith("OSC:")) return "osc";
+        return "request";
+      }
+
+      function fmtTime(ts) {
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], { hour12: false }) + "." + String(d.getMilliseconds()).padStart(3, "0");
+      }
+
+      function addLog({ message, timestamp }, forcedKind) {
+        const kind = forcedKind || classify(message);
+        const el = document.createElement("div");
+        el.className = "log-entry";
+        el.dataset.kind = kind;
+        if (kind === "error") el.classList.add("error");
+        else if (message.startsWith("WARN")) el.classList.add("warn");
+        if (searchTerm && !message.toLowerCase().includes(searchTerm)) el.classList.add("search-miss");
+
+        const time = document.createElement("span");
+        time.className = "log-time";
+        time.textContent = fmtTime(timestamp);
+        const msg = document.createElement("span");
+        msg.className = "log-msg";
+        msg.textContent = message;
+        el.append(time, msg);
+        logsEl.appendChild(el);
+
+        if (kind in kindCounts) kindCounts[kind]++;
+        while (logsEl.children.length > MAX_LOG_DOM) {
+          const k = logsEl.firstChild.dataset.kind;
+          if (k in kindCounts) kindCounts[k]--;
+          logsEl.removeChild(logsEl.firstChild);
+        }
+      }
+
+      function applyFilters() {
+        logsEl.classList.toggle("hide-feedback", !filters.feedback);
+        logsEl.classList.toggle("hide-client",   !filters.client);
+        logsEl.classList.toggle("hide-osc",      !filters.osc);
+        chips.forEach((c) => {
+          const k = c.dataset.filter;
+          c.classList.toggle("on", !!filters[k]);
+          c.querySelector(".count").textContent = kindCounts[k];
+          c.title = filters[k] ? `Hide ${k} messages` : `Show ${k} messages`;
+        });
+        for (const el of logsEl.children) {
+          el.classList.toggle("search-miss", !!searchTerm && !el.textContent.toLowerCase().includes(searchTerm));
+        }
+        let visible = 0;
+        for (const el of logsEl.children) if (el.offsetParent !== null) visible++;
+        const total = logsEl.children.length;
+        logCount.textContent = visible === total ? `${total} entries` : `${visible} of ${total} entries`;
+      }
+
+      function updateFooter() {
+        chips.forEach((c) => (c.querySelector(".count").textContent = kindCounts[c.dataset.filter]));
+        let visible = 0;
+        for (const el of logsEl.children) if (el.offsetParent !== null) visible++;
+        const total = logsEl.children.length;
+        logCount.textContent = visible === total ? `${total} entries` : `${visible} of ${total} entries`;
+      }
+
+      function scrollToLatest() {
+        logsEl.scrollTop = logsEl.scrollHeight;
+        follow = true;
+        jumpLatest.hidden = true;
+      }
+
+      chips.forEach((c) => c.addEventListener("click", () => {
+        const k = c.dataset.filter;
+        filters[k] = !filters[k];
+        try { localStorage.setItem("control-log-filters", JSON.stringify(filters)); } catch {}
+        applyFilters();
+        if (follow) scrollToLatest();
+      }));
+
+      logSearch.addEventListener("input", () => {
+        searchTerm = logSearch.value.trim().toLowerCase();
+        applyFilters();
+        if (follow) scrollToLatest();
+      });
+
+      document.getElementById("log-clear").addEventListener("click", () => {
+        logsEl.innerHTML = "";
+        Object.keys(kindCounts).forEach((k) => (kindCounts[k] = 0));
+        applyFilters();
+      });
+
+      logsEl.addEventListener("scroll", () => {
+        const atBottom = logsEl.scrollHeight - logsEl.scrollTop - logsEl.clientHeight < 12;
+        follow = atBottom;
+        jumpLatest.hidden = atBottom;
+      });
+      jumpLatest.addEventListener("click", scrollToLatest);
+
+      // Batch footer updates so a burst of log lines doesn't recount every time.
+      let footerTimer = null;
+      function scheduleFooter() {
+        if (footerTimer) return;
+        footerTimer = setTimeout(() => { footerTimer = null; updateFooter(); }, 100);
+      }
+
+      /* ── Socket handlers ─────────────────────────────── */
+
+      socket.on("connect", () => {
+        connEl.className = "conn online";
+        connText.textContent = "Connected";
+      });
+      socket.on("disconnect", () => {
+        connEl.className = "conn offline";
+        connText.textContent = "Disconnected";
+        addLog({ message: "ERROR Lost connection to server", timestamp: new Date().toISOString() }, "error");
+        scheduleFooter();
+        if (follow) scrollToLatest();
+      });
+
+      socket.on("state:all", (states) => {
+        states.forEach((s) => (stateMap[s.Target] = s));
+        renderAll();
+      });
+
+      socket.on("state:update", (update) => {
+        stateMap[update.Target] = update;
+        renderTarget(update.Target);
+      });
+
+      socket.on("log:history", (entries) => {
+        logsEl.innerHTML = "";
+        Object.keys(kindCounts).forEach((k) => (kindCounts[k] = 0));
+        entries.forEach((e) => addLog(e));
+        applyFilters();
+        scrollToLatest();
+      });
+
+      socket.on("log", (entry) => {
+        addLog(entry);
+        scheduleFooter();
+        if (follow) scrollToLatest();
+      });
+
+      applyFilters();
+    </script>
+  </body>
+</html>

@@ -13,6 +13,14 @@ npm run dev
 
 Accessible at http://ip:4002
 
+## Web pages
+
+| Path             | Purpose                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `/index.html`    | Read-only live state view                                                                |
+| `/control.html`  | Live state + controls for every endpoint, with a filterable log (feedback / clients / OSC) |
+| `/diagrams.html` | Debug reference: OSC address tables, logic diagrams, raw request buttons                 |
+
 ---
 
 ## Chamsys Zone Mapping
@@ -227,6 +235,7 @@ Sets the intensity for a target. Setting intensity to `0` also sets the state to
 | `state:all`    | Server → Client | Array of all current states (emitted on connection) |
 | `state:update` | Server → Client | Single updated state object                         |
 | `log`          | Server → Client | `{ message, timestamp }`                            |
+| `log:history`  | Server → Client | Array of the last 500 log entries (emitted on connection) |
 
 ---
 

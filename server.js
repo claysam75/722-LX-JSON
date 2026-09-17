@@ -40,9 +40,15 @@ function broadcastStateUpdate(target) {
   io.emit("state:update", getState(target));
 }
 
+const LOG_HISTORY_MAX = 500;
+const logHistory = [];
+
 function log(message) {
   console.log(message);
-  io.emit("log", { message, timestamp: new Date().toISOString() });
+  const entry = { message, timestamp: new Date().toISOString() };
+  logHistory.push(entry);
+  if (logHistory.length > LOG_HISTORY_MAX) logHistory.shift();
+  io.emit("log", entry);
 }
 
 function isLdWetAreaActive() {
@@ -83,6 +89,9 @@ function pushStateToExternal() {
 }
 
 io.on("connection", (socket) => {
+  // Send history before logging the connection so the new client
+  // doesn't receive its own "connected" line twice.
+  socket.emit("log:history", logHistory);
   log("New client connected");
   socket.emit("state:all", getAllStates());
 });
