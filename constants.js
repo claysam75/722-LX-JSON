@@ -1067,47 +1067,41 @@ const VESSEL_SCENE_OSC = {
     "/v/alloff/name2",
     "/v/alloff/ld",
   ],
-  UNDERWAY: [
-    "/v/underway/sd",
-    "/v/underway/md",
-    "/v/underway/name1",
-    "/v/underway/name2",
-    "/v/underway/ld",
-  ],
+  UNDERWAY: ["/v/uw/sd", "/v/uw/md", "/v/uw/name1", "/v/uw/name2", "/v/uw/ld"],
   DOCK_GUESTS: [
-    "/v/dockguests/sd",
-    "/v/dockguests/md",
-    "/v/dockguests/name1",
-    "/v/dockguests/name2",
-    "/v/dockguests/ld",
+    "/v/dockg/sd",
+    "/v/dockg/md",
+    "/v/dockg/name1",
+    "/v/dockg/name2",
+    "/v/dockg/ld",
   ],
   DOCK_CREW: [
-    "/v/dockcrew/sd",
-    "/v/dockcrew/md",
-    "/v/dockcrew/name1",
-    "/v/dockcrew/name2",
-    "/v/dockcrew/ld",
+    "/v/dockc/sd",
+    "/v/dockc/md",
+    "/v/dockc/name1",
+    "/v/dockc/name2",
+    "/v/dockc/ld",
   ],
   ANCHOR_GUESTS: [
-    "/v/anchorguests/sd",
-    "/v/anchorguests/md",
-    "/v/anchorguests/name1",
-    "/v/anchorguests/name2",
-    "/v/anchorguests/ld",
+    "/v/anchg/sd",
+    "/v/anchg/md",
+    "/v/anchg/name1",
+    "/v/anchg/name2",
+    "/v/anchg/ld",
   ],
   ANCHOR_CREW: [
-    "/v/anchorcrew/sd",
-    "/v/anchorcrew/md",
-    "/v/anchorcrew/name1",
-    "/v/anchorcrew/name2",
-    "/v/anchorcrew/ld",
+    "/v/anchc/sd",
+    "/v/anchc/md",
+    "/v/anchc/name1",
+    "/v/anchc/name2",
+    "/v/anchc/ld",
   ],
   MAX_LIGHTING: [
-    "/v/maxlighting/sd",
-    "/v/maxlighting/md",
-    "/v/maxlighting/name1",
-    "/v/maxlighting/name2",
-    "/v/maxlighting/ld",
+    "/v/max/sd",
+    "/v/max/md",
+    "/v/max/name1",
+    "/v/max/name2",
+    "/v/max/ld",
   ],
   HELI_OPS: [
     "/v/heliops/sd",
@@ -1126,7 +1120,7 @@ const VESSEL_SCENE_OSC = {
 };
 
 // Delay between consecutive messages of a vessel scene sequence.
-const VESSEL_SCENE_OSC_GAP_MS = 50;
+const VESSEL_SCENE_OSC_GAP_MS = 100;
 
 module.exports = {
   COLOUR_OSC_MAPPINGS,
