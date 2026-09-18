@@ -1048,25 +1048,91 @@ const INTENSITY_OSC_MAPPINGS = {
 };
 
 // Extra scenes accepted only by the VESSEL target, on top of SCENES.
-// Value is the OSC address that fires the scene. Leave "" until known —
-// the server will record the scene but log a warning instead of sending OSC.
+// Each scene fires a sequence of OSC messages (one per area) so the existing
+// ChamSys playbacks can be reused. Messages are sent in array order, spaced
+// VESSEL_SCENE_OSC_GAP_MS apart. Leave an entry "" until known — it is skipped
+// and a warning is logged.
 const VESSEL_SCENE_OSC = {
-  ALL_ON: "/exec/2/181",
-  ALL_OFF: "/exec/2/182",
-  UNDERWAY: "/exec/2/183",
-  DOCK_GUESTS: "/exec/2/184",
-  DOCK_CREW: "/exec/2/185",
-  ANCHOR_GUESTS: "/exec/2/186",
-  ANCHOR_CREW: "/exec/2/187",
-  MAX_LIGHTING: "/exec/2/188",
-  HELI_OPS: "/exec/2/189",
-  PARTY: "/exec/2/190",
+  ALL_ON: [
+    "/v/allon/sd",
+    "/v/allon/md",
+    "/v/allon/name1",
+    "/v/allon/name2",
+    "/v/allon/ld",
+  ],
+  ALL_OFF: [
+    "/v/alloff/sd",
+    "/v/alloff/md",
+    "/v/alloff/name1",
+    "/v/alloff/name2",
+    "/v/alloff/ld",
+  ],
+  UNDERWAY: [
+    "/v/underway/sd",
+    "/v/underway/md",
+    "/v/underway/name1",
+    "/v/underway/name2",
+    "/v/underway/ld",
+  ],
+  DOCK_GUESTS: [
+    "/v/dockguests/sd",
+    "/v/dockguests/md",
+    "/v/dockguests/name1",
+    "/v/dockguests/name2",
+    "/v/dockguests/ld",
+  ],
+  DOCK_CREW: [
+    "/v/dockcrew/sd",
+    "/v/dockcrew/md",
+    "/v/dockcrew/name1",
+    "/v/dockcrew/name2",
+    "/v/dockcrew/ld",
+  ],
+  ANCHOR_GUESTS: [
+    "/v/anchorguests/sd",
+    "/v/anchorguests/md",
+    "/v/anchorguests/name1",
+    "/v/anchorguests/name2",
+    "/v/anchorguests/ld",
+  ],
+  ANCHOR_CREW: [
+    "/v/anchorcrew/sd",
+    "/v/anchorcrew/md",
+    "/v/anchorcrew/name1",
+    "/v/anchorcrew/name2",
+    "/v/anchorcrew/ld",
+  ],
+  MAX_LIGHTING: [
+    "/v/maxlighting/sd",
+    "/v/maxlighting/md",
+    "/v/maxlighting/name1",
+    "/v/maxlighting/name2",
+    "/v/maxlighting/ld",
+  ],
+  HELI_OPS: [
+    "/v/heliops/sd",
+    "/v/heliops/md",
+    "/v/heliops/name1",
+    "/v/heliops/name2",
+    "/v/heliops/ld",
+  ],
+  PARTY: [
+    "/v/party/sd",
+    "/v/party/md",
+    "/v/party/name1",
+    "/v/party/name2",
+    "/v/party/ld",
+  ],
 };
+
+// Delay between consecutive messages of a vessel scene sequence.
+const VESSEL_SCENE_OSC_GAP_MS = 50;
 
 module.exports = {
   COLOUR_OSC_MAPPINGS,
   INTENSITY_OSC_MAPPINGS,
   VESSEL_SCENE_OSC,
+  VESSEL_SCENE_OSC_GAP_MS,
   VESSEL_SCENES: Object.keys(VESSEL_SCENE_OSC),
   OSC_TARGET: "127.0.0.1",
   OSC_PORT: 8000,

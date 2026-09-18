@@ -16,6 +16,7 @@ const {
   SCENES,
   VESSEL_SCENES,
   VESSEL_SCENE_OSC,
+  VESSEL_SCENE_OSC_GAP_MS,
   FEEDBACK_TARGETS,
   TARGET_ALIASES,
 } = require("./constants");
@@ -687,6 +688,17 @@ app.post("/intensity", (req, res) => {
   });
 });
 
+// Fire a list of OSC addresses one after another, gapMs apart, so ChamSys
+// registers each as a separate trigger. Not awaited by callers — the HTTP
+// response shouldn't wait on the sequence.
+async function sendOSCSequence(addresses, gapMs) {
+  for (const [i, address] of addresses.entries()) {
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, gapMs));
+    sendOSC(address, []);
+    log(`OSC: ${address}`);
+  }
+}
+
 app.post("/scene", (req, res) => {
   const { Target, Scene } = req.body;
   log(`Scene request: ${Target} -> ${Scene}`);
@@ -771,12 +783,12 @@ app.post("/scene", (req, res) => {
         sendOSC("/exec/10/17", []);
         log("OSC: Vessel Scene OFF");
       } else if (VESSEL_SCENES.includes(Scene)) {
-        const addr = VESSEL_SCENE_OSC[Scene];
-        if (addr) {
-          sendOSC(addr, []);
-          log(`OSC: Vessel Scene ${Scene}`);
+        const addrs = VESSEL_SCENE_OSC[Scene].filter(Boolean);
+        if (addrs.length) {
+          log(`OSC: Vessel Scene ${Scene} (${addrs.length} messages)`);
+          sendOSCSequence(addrs, VESSEL_SCENE_OSC_GAP_MS);
         } else {
-          log(`WARN: No OSC address configured for Vessel scene ${Scene}`);
+          log(`WARN: No OSC addresses configured for Vessel scene ${Scene}`);
         }
       }
       break;
