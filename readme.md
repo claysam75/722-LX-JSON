@@ -15,11 +15,12 @@ Accessible at http://ip:4002
 
 ## Web pages
 
-| Path             | Purpose                                                                                  |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `/index.html`    | Read-only live state view                                                                |
-| `/control.html`  | Live state + controls for every endpoint, with a filterable log (feedback / clients / OSC) |
-| `/diagrams.html` | Debug reference: OSC address tables, logic diagrams, raw request buttons                 |
+| Path             | Purpose                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| `/control.html`  | Live state + controls for every endpoint, with a filterable log (feedback / clients / OSC)          |
+| `/diagrams.html` | Read-only system reference: OSC address tables and logic diagrams (linked from the control page)   |
+
+The `HULL DOOR` target is shown as **Guest Entrance** in the GUI; the backend name is unchanged.
 
 ---
 

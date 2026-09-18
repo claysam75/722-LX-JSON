@@ -41,7 +41,7 @@
     "State": "OFF",
     "Scene": "",
     "Colours": {
-      "1": 8,
+      "1": 1,
       "2": 1,
       "3": 1,
       "4": 1
@@ -55,7 +55,7 @@
     "Lights": {
       "UD SB": "ON",
       "HULL DOOR": "ON",
-      "GUEST ENTRANCE": "OFF"
+      "GUEST ENTRANCE": "ON"
     }
   },
   {
@@ -226,7 +226,7 @@
   },
   {
     "Target": "HULL DOOR",
-    "State": "CLOSED"
+    "State": "OPEN"
   },
   {
     "Target": "EVENT MODE MD",

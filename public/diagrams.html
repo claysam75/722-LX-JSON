@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>722 Parser — Debug Reference</title>
+    <title>722 Parser — System Reference</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
       *,
@@ -47,6 +47,9 @@
         font-size: 0.9rem;
         margin-bottom: 1rem;
       }
+      .meta a {
+        margin-left: 0.5rem;
+      }
 
       nav {
         display: flex;
@@ -71,6 +74,9 @@
         color: #fff;
       }
 
+      .table-wrap {
+        overflow-x: auto;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -102,6 +108,9 @@
         font-family: "Courier New", monospace;
         font-size: 0.83em;
         white-space: nowrap;
+      }
+      .muted {
+        color: #64748b;
       }
 
       .note {
@@ -166,1293 +175,358 @@
         font-size: 0.82rem;
         font-family: monospace;
       }
-
-      /* ── Buttons ── */
-      .btn {
-        padding: 0.22rem 0.55rem;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin: 1px;
-        white-space: nowrap;
-        transition: opacity 0.1s;
-      }
-      .btn:hover {
-        opacity: 0.82;
-      }
-      .btn:active {
-        opacity: 0.65;
-        transform: scale(0.97);
-      }
-
-      .btn-on {
-        background: #166534;
-        color: #86efac;
-      }
-      .btn-off {
-        background: #7f1d1d;
-        color: #fca5a5;
-      }
-      .btn-toggle {
-        background: #312e81;
-        color: #c7d2fe;
-      }
-      .btn-open {
-        background: #7c2d12;
-        color: #fed7aa;
-      }
-      .btn-closed {
-        background: #1e3a5f;
-        color: #7dd3fc;
-      }
-      .btn-dim {
-        background: #713f12;
-        color: #fef08a;
-      }
-      .btn-night {
-        background: #1e1b4b;
-        color: #a5b4fc;
-      }
-      .btn-disable {
-        background: #7f1d1d;
-        color: #fca5a5;
-      }
-      .btn-enable {
-        background: #166534;
-        color: #86efac;
-      }
-      .btn-neutral {
-        background: #1e293b;
-        color: #94a3b8;
-        border: 1px solid #334155;
-      }
-
-      /* ── State panel ── */
-      #state-panel {
-        background: #070e1a;
-        border: 1px solid #1e3a5f;
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin-bottom: 0.75rem;
-      }
-      .state-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-      }
-      .state-header span {
-        color: #93c5fd;
-        font-weight: 600;
-        font-size: 0.9rem;
-      }
-      #state-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-      }
-      .state-chip {
-        padding: 0.18rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.76rem;
-        font-family: monospace;
-        border: 1px solid transparent;
-      }
-      .chip-on {
-        background: #052e16;
-        border-color: #166534;
-        color: #86efac;
-      }
-      .chip-off {
-        background: #1a2035;
-        border-color: #2d3f5a;
-        color: #64748b;
-      }
-      .chip-open {
-        background: #431407;
-        border-color: #7c2d12;
-        color: #fed7aa;
-      }
-      .chip-closed {
-        background: #0f2040;
-        border-color: #1e3a5f;
-        color: #93c5fd;
-      }
-      .chip-active {
-        background: #1c1200;
-        border-color: #713f12;
-        color: #fef08a;
-      }
-      .chip-neutral {
-        background: #1e293b;
-        border-color: #334155;
-        color: #94a3b8;
-      }
-      .chip-alarm {
-        background: #450a0a;
-        border-color: #991b1b;
-        color: #fca5a5;
-      }
-
-      /* ── Request log ── */
-      #log-panel {
-        background: #070e1a;
-        border: 1px solid #1e3a5f;
-        border-radius: 6px;
-        padding: 0.6rem 0.75rem;
-        max-height: 130px;
-        overflow-y: auto;
-        font-family: "Courier New", monospace;
-        font-size: 0.76rem;
-        margin-bottom: 1.5rem;
-      }
-      #log-panel .log-empty {
-        color: #475569;
-        font-style: italic;
-      }
-      #log-panel .log-ok {
-        color: #86efac;
-        margin-bottom: 2px;
-      }
-      #log-panel .log-err {
-        color: #f87171;
-        margin-bottom: 2px;
-      }
-
-      /* ── Colour/intensity test panel ── */
-      .ci-panel {
-        background: #0f1e35;
-        border: 1px solid #1e3a5f;
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin: 0.5rem 0 1.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
-      }
-      .ci-panel label {
-        font-size: 0.82rem;
-        color: #94a3b8;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .ci-panel select {
-        background: #1e293b;
-        color: #e2e8f0;
-        border: 1px solid #334155;
-        border-radius: 4px;
-        padding: 0.25rem 0.4rem;
-        font-size: 0.82rem;
-      }
-      .ci-divider {
-        width: 1px;
-        height: 28px;
-        background: #1e3a5f;
-      }
     </style>
   </head>
   <body>
-    <h1>722 Parser — Debug Reference</h1>
+    <h1>722 Parser — System Reference</h1>
     <p class="meta">
-      Server: <code>http://localhost:4002</code> &nbsp;·&nbsp; OSC:
-      <code>10.101.1.252:8001</code>
+      HTTP: <code>:4002</code> &nbsp;·&nbsp; OSC out:
+      <code>OSC_TARGET:OSC_PORT</code> from <code>constants.js</code>
+      &nbsp;·&nbsp; External feedback:
+      <code>10.50.40.103/cws/dmxpc/state</code>
+      <a href="/control.html">← Control page</a>
     </p>
-
-    <!-- ── State panel ── -->
-    <div id="state-panel">
-      <div class="state-header">
-        <span>Current State</span>
-        <button class="btn btn-neutral" onclick="refreshState()">
-          ⟳ Refresh
-        </button>
-      </div>
-      <div id="state-grid">
-        <span class="state-chip chip-neutral">Loading…</span>
-      </div>
+    <div class="note">
+      Read-only reference for how requests map to OSC and state. To drive the
+      system, use the <a href="/control.html">control page</a>. Display
+      names differ from backend names in one place: the
+      <strong>Guest Entrance</strong> door is the backend target
+      <code>HULL DOOR</code>.
     </div>
 
-    <!-- ── Request log ── -->
-    <div id="log-panel"><div class="log-empty">No requests sent yet.</div></div>
-
     <nav>
+      <a href="#overview">Overview</a>
       <a href="#toggle">POST /toggle</a>
       <a href="#set">POST /set</a>
       <a href="#scene">POST /scene</a>
+      <a href="#vessel">Vessel presets</a>
       <a href="#colour">POST /colour &amp; /intensity</a>
       <a href="#eventmode">POST /eventmode</a>
-      <a href="#hulldoor">Hull Door Logic</a>
-      <a href="#yachtname">Yacht Name Logic</a>
-      <a href="#ldspots">LD Door Spots Logic</a>
+      <a href="#guestentrance">Guest Entrance door</a>
+      <a href="#yachtname">Yacht Name lights</a>
+      <a href="#ldspots">LD Door Spots</a>
+      <a href="#feedback">Feedback / GET /state</a>
     </nav>
+
+    <!-- ══════════════════════════════════════ OVERVIEW -->
+    <section id="overview">
+      <h2>Overview</h2>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart LR
+  CLIENT["HTTP client\n(Crestron / integrator)"] -->|"POST /toggle /set /scene\n/colour /intensity /eventmode"| SRV["722 Parser\nExpress :4002"]
+  CLIENT -->|"GET /state?id=…"| SRV
+  SRV -->|"UDP OSC"| CHAM["ChamSys\nOSC_TARGET:OSC_PORT"]
+  SRV -->|"persist"| FILE[("state/state.json")]
+  SRV -->|"Socket.IO\nstate:update · log"| GUI["/control.html"]
+  SRV -->|"POST feedback payloads\nafter every change"| EXT["10.50.40.103\n/cws/dmxpc/state?payload=TypeA"]
+        </div>
+      </div>
+      <div class="note">
+        Every request runs in its own <em>log group</em>; async lines it
+        produces later (external push failures, vessel preset sequences) are
+        clustered under the originating request in the control page log.<br />
+        Incoming target aliases: <code>UNDERWATER</code> →
+        <code>UNDERWATER ALL</code> (applied to <code>req.body.Target</code>
+        and <code>GET /state?id=</code>).
+      </div>
+    </section>
 
     <!-- ══════════════════════════════════════ TOGGLE -->
     <section id="toggle">
       <h2>POST /toggle</h2>
       <p>
-        Flips target between ON and OFF. YACHT NAME has special logic — see
-        <a href="#yachtname">below</a>.
+        Body: <code>{ Target, Info? }</code>. Flips the target between ON and
+        OFF. YACHT NAME toggles all three name lights together — see
+        <a href="#yachtname">Yacht Name lights</a>.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>OSC ON</th>
-            <th>OSC OFF</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>POOL</td>
-            <td class="osc">/t/pool/1</td>
-            <td class="osc">/t/pool/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'POOL' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>WHIRLPOOL</td>
-            <td class="osc">/t/whirl/1</td>
-            <td class="osc">/t/whirl/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'WHIRLPOOL' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>YACHT NAME</td>
-            <td colspan="2">→ <a href="#yachtname">Yacht Name Logic</a></td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'YACHT NAME' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER ALL</td>
-            <td class="osc">/t/uw-all/1</td>
-            <td class="osc">/t/uw-all/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER ALL' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER STERN</td>
-            <td class="osc">/t/uw-stern/1</td>
-            <td class="osc">/t/uw-stern/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER STERN' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER AFT PS</td>
-            <td class="osc">/t/uw-a-p/1</td>
-            <td class="osc">/t/uw-a-p/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER AFT PS' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER AFT SB</td>
-            <td class="osc">/t/uw-a-s/1</td>
-            <td class="osc">/t/uw-a-s/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER AFT SB' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER MID PS</td>
-            <td class="osc">/t/uw-m-p/1</td>
-            <td class="osc">/t/uw-m-p/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER MID PS' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER MID SB</td>
-            <td class="osc">/t/uw-m-s/1</td>
-            <td class="osc">/t/uw-m-s/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER MID SB' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER FWD</td>
-            <td class="osc">/t/uw-fwd/1</td>
-            <td class="osc">/t/uw-fwd/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER FWD' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>UNDERWATER UP BOW</td>
-            <td class="osc">/t/uw-up-b/1</td>
-            <td class="osc">/t/uw-up-b/0</td>
-            <td>
-              <button
-                class="btn btn-toggle"
-                onclick="fire('toggle', { Target: 'UNDERWATER UP BOW' })"
-              >
-                Toggle
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>→ ON</th>
+              <th>→ OFF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>POOL</td><td class="osc">/t/pool/1</td><td class="osc">/t/pool/0</td></tr>
+            <tr><td>WHIRLPOOL</td><td class="osc">/t/whirl/1</td><td class="osc">/t/whirl/0</td></tr>
+            <tr><td>YACHT NAME</td><td class="osc">/t/name/side/1 · /t/name/aft/1 · /t/name/guest/1</td><td class="osc">/t/name/side/0 · /t/name/aft/0 · /t/name/guest/0</td></tr>
+            <tr><td>UNDERWATER ALL</td><td class="osc">/t/uw-all/1</td><td class="osc">/t/uw-all/0</td></tr>
+            <tr><td>UNDERWATER STERN</td><td class="osc">/t/uw-stern/1</td><td class="osc">/t/uw-stern/0</td></tr>
+            <tr><td>UNDERWATER AFT PS</td><td class="osc">/t/uw-a-p/1</td><td class="osc">/t/uw-a-p/0</td></tr>
+            <tr><td>UNDERWATER AFT SB</td><td class="osc">/t/uw-a-s/1</td><td class="osc">/t/uw-a-s/0</td></tr>
+            <tr><td>UNDERWATER MID PS</td><td class="osc">/t/uw-m-p/1</td><td class="osc">/t/uw-m-p/0</td></tr>
+            <tr><td>UNDERWATER MID SB</td><td class="osc">/t/uw-m-s/1</td><td class="osc">/t/uw-m-s/0</td></tr>
+            <tr><td>UNDERWATER FWD</td><td class="osc">/t/uw-fwd/1</td><td class="osc">/t/uw-fwd/0</td></tr>
+            <tr><td>UNDERWATER UP BOW</td><td class="osc">/t/uw-up-b/1</td><td class="osc">/t/uw-up-b/0</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════ SET -->
     <section id="set">
       <h2>POST /set</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>Valid States</th>
-            <th>OSC (ON/OPEN)</th>
-            <th>OSC (OFF/CLOSED)</th>
-            <th>Side effects</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>SUN DECK FWD SPOTS</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/sd-f-sp/1</td>
-            <td class="osc">/s/sd-f-sp/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'SUN DECK FWD SPOTS', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'SUN DECK FWD SPOTS', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>SUN DECK FWD STRIPS</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/sd-f-st/1</td>
-            <td class="osc">/s/sd-f-st/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'SUN DECK FWD STRIPS', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'SUN DECK FWD STRIPS', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>MD AFT SPOTS POOL+TABLE</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/md-a-s-pt/1</td>
-            <td class="osc">/s/md-a-s-pt/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', {
-                    Target: 'MAIN DECK AFT SPOTS POOL AND TABLE',
-                    State: 'ON',
-                  })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', {
-                    Target: 'MAIN DECK AFT SPOTS POOL AND TABLE',
-                    State: 'OFF',
-                  })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>MAIN DECK AFT SPOTS</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/md-a-s/1</td>
-            <td class="osc">/s/md-a-s/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK AFT SPOTS', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK AFT SPOTS', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>MAIN DECK AFT STRIPS</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/md-a-st/1</td>
-            <td class="osc">/s/md-a-st/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK AFT STRIPS', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK AFT STRIPS', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>MAIN DECK COURTESY</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/md-a-c/1</td>
-            <td class="osc">/s/md-a-c/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK COURTESY', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'MAIN DECK COURTESY', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>LD DOOR SPOTS</td>
-            <td>ON / OFF</td>
-            <td class="osc">/s/ld-door-sp/1</td>
-            <td class="osc">/s/ld-door-sp/0</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="fire('set', { Target: 'LD DOOR SPOTS', State: 'ON' })"
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="fire('set', { Target: 'LD DOOR SPOTS', State: 'OFF' })"
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>LOWER DECK COURTESY</td>
-            <td>ON / OFF</td>
-            <td class="osc">/exec/2/140</td>
-            <td class="osc">/exec/2/139</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', { Target: 'LOWER DECK COURTESY', State: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', { Target: 'LOWER DECK COURTESY', State: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>FIRE ALARM</td>
-            <td>SILENT / SOUNDING</td>
-            <td colspan="2">State only, no OSC</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-enable"
-                onclick="fire('set', { Target: 'FIRE ALARM', State: 'SILENT' })"
-              >
-                SILENT
-              </button>
-              <button
-                class="btn btn-disable"
-                onclick="
-                  fire('set', { Target: 'FIRE ALARM', State: 'SOUNDING' })
-                "
-              >
-                SOUNDING
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>HULL DOOR</td>
-            <td>OPEN / CLOSED</td>
-            <td colspan="2">→ <a href="#hulldoor">Hull Door Logic</a></td>
-            <td>Triggers GUEST ENTRANCE name light</td>
-            <td>
-              <button
-                class="btn btn-open"
-                onclick="fire('set', { Target: 'HULL DOOR', State: 'OPEN' })"
-              >
-                OPEN
-              </button>
-              <button
-                class="btn btn-closed"
-                onclick="fire('set', { Target: 'HULL DOOR', State: 'CLOSED' })"
-              >
-                CLOSED
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h3>YACHT NAME — direct light control</h3>
-      <div class="note">
-        Use <code>Info: "UD SB"</code> for the upper deck stbd name light.
-        Omit Info (or use <code>Info: "HULL DOOR"</code>) for the aft name
-        light. The GUEST ENTRANCE light is driven automatically by the hull door
-        signal and has no direct set handler.
+      <p>
+        Body: <code>{ Target, State, Info? }</code>. State is
+        <code>ON</code>/<code>OFF</code> except where noted.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>States</th>
+              <th>→ ON</th>
+              <th>→ OFF</th>
+              <th>Side effects</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>SUN DECK FWD SPOTS</td><td>ON / OFF</td><td class="osc">/s/sd-f-sp/1</td><td class="osc">/s/sd-f-sp/0</td><td>—</td></tr>
+            <tr><td>SUN DECK FWD STRIPS</td><td>ON / OFF</td><td class="osc">/s/sd-f-st/1</td><td class="osc">/s/sd-f-st/0</td><td>—</td></tr>
+            <tr><td>MAIN DECK AFT SPOTS POOL AND TABLE</td><td>ON / OFF</td><td class="osc">/s/md-a-s-pt/1</td><td class="osc">/s/md-a-s-pt/0</td><td>—</td></tr>
+            <tr><td>MAIN DECK AFT SPOTS</td><td>ON / OFF</td><td class="osc">/s/md-a-s/1</td><td class="osc">/s/md-a-s/0</td><td>—</td></tr>
+            <tr><td>MAIN DECK AFT STRIPS</td><td>ON / OFF</td><td class="osc">/s/md-a-st/1</td><td class="osc">/s/md-a-st/0</td><td>—</td></tr>
+            <tr><td>MAIN DECK COURTESY</td><td>ON / OFF</td><td class="osc">/s/md-a-c/1</td><td class="osc">/s/md-a-c/0</td><td>—</td></tr>
+            <tr><td>LOWER DECK COURTESY</td><td>ON / OFF</td><td class="osc">/exec/2/140</td><td class="osc">/exec/2/139</td><td>—</td></tr>
+            <tr><td>LD DOOR SPOTS</td><td>ON / OFF</td><td class="osc">/s/ld-door-sp/1</td><td class="osc">/s/ld-door-sp/0</td><td>Normally driven by <a href="#ldspots">syncLdDoorSpots</a></td></tr>
+            <tr><td>FIRE ALARM</td><td>SILENT / SOUNDING</td><td class="muted" colspan="2">no OSC — state only</td><td>Feedback push</td></tr>
+            <tr><td>HULL DOOR <span class="muted">(Guest Entrance)</span></td><td>OPEN / CLOSED</td><td class="osc">/exec/2/38 <span class="muted">(OPEN)</span></td><td class="osc">/exec/2/37 <span class="muted">(CLOSED)</span></td><td>See <a href="#guestentrance">Guest Entrance door</a></td></tr>
+            <tr><td>YACHT NAME</td><td>ON / OFF · Info: <code>UD SB</code> or <code>HULL DOOR</code></td><td class="osc">/t/name/side/1 or /t/name/aft/1</td><td class="osc">/t/name/side/0 or /t/name/aft/0</td><td>See <a href="#yachtname">Yacht Name lights</a></td></tr>
+          </tbody>
+        </table>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Light</th>
-            <th>Info field</th>
-            <th>OSC ON</th>
-            <th>OSC OFF</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>UD SB (starboard side)</td>
-            <td><code>UD SB</code></td>
-            <td class="osc">/t/name/side/1</td>
-            <td class="osc">/t/name/side/0</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('set', {
-                    Target: 'YACHT NAME',
-                    State: 'ON',
-                    Info: 'UD SB',
-                  })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('set', {
-                    Target: 'YACHT NAME',
-                    State: 'OFF',
-                    Info: 'UD SB',
-                  })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>Hull door light (aft)</td>
-            <td><em>(omit)</em></td>
-            <td class="osc">/t/name/aft/1</td>
-            <td class="osc">/t/name/aft/0</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="fire('set', { Target: 'YACHT NAME', State: 'ON' })"
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="fire('set', { Target: 'YACHT NAME', State: 'OFF' })"
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </section>
 
     <!-- ══════════════════════════════════════ SCENE -->
     <section id="scene">
       <h2>POST /scene</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>ON</th>
-            <th>DIM</th>
-            <th>NIGHT</th>
-            <th>OFF</th>
-            <th>Side effects</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>SUN DECK EXTERIOR FWD</td>
-            <td class="osc">/exec/10/5</td>
-            <td class="osc">/exec/10/4</td>
-            <td class="osc">/exec/10/3</td>
-            <td class="osc">/exec/10/2</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('scene', {
-                    Target: 'SUN DECK EXTERIOR FWD',
-                    Scene: 'ON',
-                  })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-dim"
-                onclick="
-                  fire('scene', {
-                    Target: 'SUN DECK EXTERIOR FWD',
-                    Scene: 'DIM',
-                  })
-                "
-              >
-                DIM
-              </button>
-              <button
-                class="btn btn-night"
-                onclick="
-                  fire('scene', {
-                    Target: 'SUN DECK EXTERIOR FWD',
-                    Scene: 'NIGHT',
-                  })
-                "
-              >
-                NIGHT
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('scene', {
-                    Target: 'SUN DECK EXTERIOR FWD',
-                    Scene: 'OFF',
-                  })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>MAIN DECK EXTERIOR AFT</td>
-            <td class="osc">/exec/10/10</td>
-            <td class="osc">/exec/10/9</td>
-            <td class="osc">/exec/10/8</td>
-            <td class="osc">/exec/10/7</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('scene', {
-                    Target: 'MAIN DECK EXTERIOR AFT',
-                    Scene: 'ON',
-                  })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-dim"
-                onclick="
-                  fire('scene', {
-                    Target: 'MAIN DECK EXTERIOR AFT',
-                    Scene: 'DIM',
-                  })
-                "
-              >
-                DIM
-              </button>
-              <button
-                class="btn btn-night"
-                onclick="
-                  fire('scene', {
-                    Target: 'MAIN DECK EXTERIOR AFT',
-                    Scene: 'NIGHT',
-                  })
-                "
-              >
-                NIGHT
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('scene', {
-                    Target: 'MAIN DECK EXTERIOR AFT',
-                    Scene: 'OFF',
-                  })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>LOWER DECK WET AREA</td>
-            <td class="osc">/exec/10/15</td>
-            <td class="osc">/exec/10/14</td>
-            <td class="osc">/exec/10/13</td>
-            <td class="osc">/exec/10/12</td>
-            <td>→ <a href="#ldspots">syncLdDoorSpots</a></td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="
-                  fire('scene', { Target: 'LOWER DECK WET AREA', Scene: 'ON' })
-                "
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-dim"
-                onclick="
-                  fire('scene', { Target: 'LOWER DECK WET AREA', Scene: 'DIM' })
-                "
-              >
-                DIM
-              </button>
-              <button
-                class="btn btn-night"
-                onclick="
-                  fire('scene', {
-                    Target: 'LOWER DECK WET AREA',
-                    Scene: 'NIGHT',
-                  })
-                "
-              >
-                NIGHT
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="
-                  fire('scene', { Target: 'LOWER DECK WET AREA', Scene: 'OFF' })
-                "
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>VESSEL</td>
-            <td class="osc">/exec/10/20</td>
-            <td class="osc">/exec/10/19</td>
-            <td class="osc">/exec/10/18</td>
-            <td class="osc">/exec/10/17</td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ON' })"
-              >
-                ON
-              </button>
-              <button
-                class="btn btn-dim"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'DIM' })"
-              >
-                DIM
-              </button>
-              <button
-                class="btn btn-night"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'NIGHT' })"
-              >
-                NIGHT
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'OFF' })"
-              >
-                OFF
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>VESSEL (extended scenes)</td>
-            <td colspan="4">
-              Addresses from <code>VESSEL_SCENE_OSC</code> in constants.js
-            </td>
-            <td>—</td>
-            <td>
-              <button
-                class="btn btn-on"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ALL_ON' })"
-              >
-                ALL_ON
-              </button>
-              <button
-                class="btn btn-off"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ALL_OFF' })"
-              >
-                ALL_OFF
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'UNDERWAY' })"
-              >
-                UNDERWAY
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'DOCK_GUESTS' })"
-              >
-                DOCK_GUESTS
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'DOCK_CREW' })"
-              >
-                DOCK_CREW
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ANCHOR_GUESTS' })"
-              >
-                ANCHOR_GUESTS
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'ANCHOR_CREW' })"
-              >
-                ANCHOR_CREW
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'MAX_LIGHTING' })"
-              >
-                MAX_LIGHTING
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'HELI_OPS' })"
-              >
-                HELI_OPS
-              </button>
-              <button
-                class="btn btn-neutral"
-                onclick="fire('scene', { Target: 'VESSEL', Scene: 'PARTY' })"
-              >
-                PARTY
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <p>
+        Body: <code>{ Target, Scene }</code>. Scenes are
+        <code>ON / DIM / NIGHT / OFF</code>; VESSEL additionally accepts the
+        <a href="#vessel">presets</a> below.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>ON</th>
+              <th>DIM</th>
+              <th>NIGHT</th>
+              <th>OFF</th>
+              <th>Side effects</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>SUN DECK EXTERIOR FWD</td><td class="osc">/exec/10/5</td><td class="osc">/exec/10/4</td><td class="osc">/exec/10/3</td><td class="osc">/exec/10/2</td><td>—</td></tr>
+            <tr><td>MAIN DECK EXTERIOR AFT</td><td class="osc">/exec/10/10</td><td class="osc">/exec/10/9</td><td class="osc">/exec/10/8</td><td class="osc">/exec/10/7</td><td>—</td></tr>
+            <tr><td>LOWER DECK WET AREA</td><td class="osc">/exec/10/15</td><td class="osc">/exec/10/14</td><td class="osc">/exec/10/13</td><td class="osc">/exec/10/12</td><td>→ <a href="#ldspots">syncLdDoorSpots</a></td></tr>
+            <tr><td>VESSEL</td><td class="osc">/exec/10/20</td><td class="osc">/exec/10/19</td><td class="osc">/exec/10/18</td><td class="osc">/exec/10/17</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ VESSEL PRESETS -->
+    <section id="vessel">
+      <h2>Vessel presets</h2>
+      <div class="note">
+        Extra scenes accepted only by <code>Target: VESSEL</code>. Each preset
+        fires a <strong>sequence of 5 OSC messages</strong> — one per area
+        (SD, MD, name 1, name 2, LD) — reusing the existing ChamSys
+        playbacks. Addresses live in <code>VESSEL_SCENE_OSC</code> in
+        <code>constants.js</code>; the gap between messages is
+        <code>VESSEL_SCENE_OSC_GAP_MS</code> (100 ms). Empty slots are
+        skipped; a preset with no addresses logs a warning and sends nothing.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Preset</th>
+              <th>1 · SD</th>
+              <th>2 · MD</th>
+              <th>3 · Name 1</th>
+              <th>4 · Name 2</th>
+              <th>5 · LD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>ALL_ON</td><td class="osc">/v/allon/sd</td><td class="osc">/v/allon/md</td><td class="osc">/v/allon/name1</td><td class="osc">/v/allon/name2</td><td class="osc">/v/allon/ld</td></tr>
+            <tr><td>ALL_OFF</td><td class="osc">/v/alloff/sd</td><td class="osc">/v/alloff/md</td><td class="osc">/v/alloff/name1</td><td class="osc">/v/alloff/name2</td><td class="osc">/v/alloff/ld</td></tr>
+            <tr><td>UNDERWAY</td><td class="osc">/v/uw/sd</td><td class="osc">/v/uw/md</td><td class="osc">/v/uw/name1</td><td class="osc">/v/uw/name2</td><td class="osc">/v/uw/ld</td></tr>
+            <tr><td>DOCK_GUESTS</td><td class="osc">/v/dockg/sd</td><td class="osc">/v/dockg/md</td><td class="osc">/v/dockg/name1</td><td class="osc">/v/dockg/name2</td><td class="osc">/v/dockg/ld</td></tr>
+            <tr><td>DOCK_CREW</td><td class="osc">/v/dockc/sd</td><td class="osc">/v/dockc/md</td><td class="osc">/v/dockc/name1</td><td class="osc">/v/dockc/name2</td><td class="osc">/v/dockc/ld</td></tr>
+            <tr><td>ANCHOR_GUESTS</td><td class="osc">/v/anchg/sd</td><td class="osc">/v/anchg/md</td><td class="osc">/v/anchg/name1</td><td class="osc">/v/anchg/name2</td><td class="osc">/v/anchg/ld</td></tr>
+            <tr><td>ANCHOR_CREW</td><td class="osc">/v/anchc/sd</td><td class="osc">/v/anchc/md</td><td class="osc">/v/anchc/name1</td><td class="osc">/v/anchc/name2</td><td class="osc">/v/anchc/ld</td></tr>
+            <tr><td>MAX_LIGHTING</td><td class="osc">/v/max/sd</td><td class="osc">/v/max/md</td><td class="osc">/v/max/name1</td><td class="osc">/v/max/name2</td><td class="osc">/v/max/ld</td></tr>
+            <tr><td>HELI_OPS</td><td class="osc">/v/heliops/sd</td><td class="osc">/v/heliops/md</td><td class="osc">/v/heliops/name1</td><td class="osc">/v/heliops/name2</td><td class="osc">/v/heliops/ld</td></tr>
+            <tr><td>PARTY</td><td class="osc">/v/party/sd</td><td class="osc">/v/party/md</td><td class="osc">/v/party/name1</td><td class="osc">/v/party/name2</td><td class="osc">/v/party/ld</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+sequenceDiagram
+  participant C as HTTP client
+  participant S as 722 Parser
+  participant Q as ChamSys
+  C->>S: POST /scene { Target: VESSEL, Scene: PRESET }
+  S->>S: setState VESSEL.Scene = PRESET · broadcast · feedback push
+  S-->>C: 200 { Target, Scene }
+  Note over S,Q: sequence runs after the response
+  S->>Q: /v/{preset}/sd
+  Note right of S: wait 100 ms
+  S->>Q: /v/{preset}/md
+  Note right of S: wait 100 ms
+  S->>Q: /v/{preset}/name1
+  Note right of S: wait 100 ms
+  S->>Q: /v/{preset}/name2
+  Note right of S: wait 100 ms
+  S->>Q: /v/{preset}/ld
+        </div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════ COLOUR / INTENSITY -->
     <section id="colour">
       <h2>POST /colour &amp; /intensity</h2>
       <p>
-        Subzone: <code>0</code> = all zones, <code>1–4</code> = individual.
-        Setting all intensities to 0 sets State = OFF.
+        Body: <code>{ Target, Subzone, Colour }</code> or
+        <code>{ Target, Subzone, Intensity }</code>. Subzone
+        <code>0</code> = all zones, <code>1–4</code> = individual. Colour
+        <code>1–20</code>; Intensity <code>100 / 75 / 50 / 25 / 0</code>.
+        Setting every intensity to 0 sets <code>State = OFF</code>, otherwise
+        <code>ON</code>.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>Exec page</th>
-            <th>Colour zone 1</th>
-            <th>Intensity zone 1</th>
-            <th>Side effects</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>POOL</td>
-            <td>3</td>
-            <td class="osc">/exec/3/2–21</td>
-            <td class="osc">/exec/3/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>WHIRLPOOL</td>
-            <td>4</td>
-            <td class="osc">/exec/4/2–21</td>
-            <td class="osc">/exec/4/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>YACHT NAME</td>
-            <td>5</td>
-            <td class="osc">/exec/5/2–21</td>
-            <td class="osc">/exec/5/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>UNDERWATER ALL</td>
-            <td>6</td>
-            <td class="osc">/exec/6/2–21</td>
-            <td class="osc">/exec/6/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>SUN DECK EXTERIOR FWD</td>
-            <td>7</td>
-            <td class="osc">/exec/7/2–21</td>
-            <td class="osc">/exec/7/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>MAIN DECK EXTERIOR AFT</td>
-            <td>8</td>
-            <td class="osc">/exec/8/2–21</td>
-            <td class="osc">/exec/8/23–27</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>LOWER DECK WET AREA</td>
-            <td>9</td>
-            <td class="osc">/exec/9/2–21</td>
-            <td class="osc">/exec/9/23–27</td>
-            <td>→ <a href="#ldspots">syncLdDoorSpots</a></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>Exec page</th>
+              <th>Colour (zone 1)</th>
+              <th>Intensity (zone 1)</th>
+              <th>Side effects</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>POOL</td><td>3</td><td class="osc">/exec/3/2–21</td><td class="osc">/exec/3/23–27</td><td>—</td></tr>
+            <tr><td>WHIRLPOOL</td><td>4</td><td class="osc">/exec/4/2–21</td><td class="osc">/exec/4/23–27</td><td>—</td></tr>
+            <tr><td>YACHT NAME</td><td>5</td><td class="osc">/exec/5/2–21</td><td class="osc">/exec/5/23–27</td><td>Re-asserted when the guest entrance opens</td></tr>
+            <tr><td>UNDERWATER ALL</td><td>6</td><td class="osc">/exec/6/2–21</td><td class="osc">/exec/6/23–27</td><td>—</td></tr>
+            <tr><td>SUN DECK EXTERIOR FWD</td><td>7</td><td class="osc">/exec/7/2–21</td><td class="osc">/exec/7/23–27</td><td>Colours 5 &amp; 6 swapped on this page</td></tr>
+            <tr><td>MAIN DECK EXTERIOR AFT</td><td>8</td><td class="osc">/exec/8/2–21</td><td class="osc">/exec/8/23–27</td><td>—</td></tr>
+            <tr><td>LOWER DECK WET AREA</td><td>9</td><td class="osc">/exec/9/2–21</td><td class="osc">/exec/9/23–27</td><td>→ <a href="#ldspots">syncLdDoorSpots</a></td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="note">
         Subzone offset: each zone is +42 addresses from the previous (z1=2,
         z2=44, z3=86, z4=128, all-zones=170).<br />
         Intensity within a zone: 0%=base, 25%=+1, 50%=+2, 75%=+3, 100%=+4.
       </div>
-
-      <h3>Test Colour / Intensity</h3>
-      <div class="ci-panel">
-        <label
-          >Target
-          <select id="ci-target">
-            <option>POOL</option>
-            <option>WHIRLPOOL</option>
-            <option>YACHT NAME</option>
-            <option>UNDERWATER ALL</option>
-            <option>SUN DECK EXTERIOR FWD</option>
-            <option>MAIN DECK EXTERIOR AFT</option>
-            <option selected>LOWER DECK WET AREA</option>
-          </select>
-        </label>
-        <label
-          >Subzone
-          <select id="ci-subzone">
-            <option value="0">0 (all)</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </label>
-        <label
-          >Colour
-          <select id="ci-colour">
-            <option value="1">1 Red</option>
-            <option value="2">2 Green</option>
-            <option value="3">3 Blue</option>
-            <option value="4">4 Yellow</option>
-            <option value="5">5 Cyan</option>
-            <option value="6">6 Magenta</option>
-            <option value="7" selected>7 White</option>
-            <option value="8">8 Warm White</option>
-            <option value="9">9 Orange</option>
-            <option value="10">10 Purple</option>
-            <option value="11">11 Pink</option>
-            <option value="12">12 Lime</option>
-            <option value="13">13 Teal</option>
-            <option value="14">14 Lavender</option>
-            <option value="15">15 Turquoise</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
-            <option value="19">19</option>
-            <option value="20">20</option>
-          </select>
-        </label>
-        <button class="btn btn-toggle" onclick="sendColour()">
-          Set Colour
-        </button>
-
-        <div class="ci-divider"></div>
-
-        <label
-          >Intensity
-          <select id="ci-intensity">
-            <option value="100" selected>100%</option>
-            <option value="75">75%</option>
-            <option value="50">50%</option>
-            <option value="25">25%</option>
-            <option value="0">0%</option>
-          </select>
-        </label>
-        <button class="btn btn-toggle" onclick="sendIntensity()">
-          Set Intensity
-        </button>
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════ EVENTMODE -->
-    <section id="eventmode">
-      <h2>POST /eventmode</h2>
-      <div class="note">
-        ON = disable zone in Chamsys (lights ignore inputs). OFF = re-enable
-        zone.
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Target</th>
-            <th>State ON (disable)</th>
-            <th>State OFF (enable)</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>EVENT MODE SD</td>
-            <td class="osc">/zone/1/disable</td>
-            <td class="osc">/zone/1/enable</td>
-            <td>
-              <button
-                class="btn btn-disable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE SD', State: 'OFF' })
-                "
-              >
-                Disable
-              </button>
-              <button
-                class="btn btn-enable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE SD', State: 'ON' })
-                "
-              >
-                Enable
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>EVENT MODE MD</td>
-            <td class="osc">/zone/2/disable</td>
-            <td class="osc">/zone/2/enable</td>
-            <td>
-              <button
-                class="btn btn-disable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE MD', State: 'OFF' })
-                "
-              >
-                Disable
-              </button>
-              <button
-                class="btn btn-enable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE MD', State: 'ON' })
-                "
-              >
-                Enable
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>EVENT MODE LD</td>
-            <td class="osc">/zone/3/disable</td>
-            <td class="osc">/zone/3/enable</td>
-            <td>
-              <button
-                class="btn btn-disable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE LD', State: 'OFF' })
-                "
-              >
-                Disable
-              </button>
-              <button
-                class="btn btn-enable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE LD', State: 'ON' })
-                "
-              >
-                Enable
-              </button>
-            </td>
-          </tr>
-          <tr>
-            <td>EVENT MODE UW</td>
-            <td class="osc">/zone/4/disable</td>
-            <td class="osc">/zone/4/enable</td>
-            <td>
-              <button
-                class="btn btn-disable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE UW', State: 'OFF' })
-                "
-              >
-                Disable
-              </button>
-              <button
-                class="btn btn-enable"
-                onclick="
-                  fire('eventmode', { Target: 'EVENT MODE UW', State: 'ON' })
-                "
-              >
-                Enable
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- ══════════════════════════════════════ HULL DOOR -->
-    <section id="hulldoor">
-      <h2>Hull Door Logic</h2>
-      <div class="note">
-        Set via <code>POST /set · HULL DOOR · State: OPEN or CLOSED</code>.
-        Controls the GUEST ENTRANCE name light: ON when the side guest entrance
-        door opens, OFF when it closes.
+      <div class="warn">
+        Colour and intensity executors on the ChamSys are <em>toggles</em>:
+        firing one that is already active deactivates it. When a request
+        repeats the value already stored for that zone, the executor is fired
+        <strong>twice</strong> (deactivate → activate) so the value is
+        re-applied to every fixture in the zone.
       </div>
       <div class="diagram-wrap">
         <div class="mermaid">
 flowchart TD
-  A["POST /set · HULL DOOR"] --> B{State valid?}
-  B -->|no| ERR["400 error"]
-  B -->|yes| SAVE["setState: HULL DOOR = State"]
-  SAVE --> BRANCH{State?}
-  BRANCH -->|OPEN| GSTON["lights.GUEST ENTRANCE = ON\nOSC → /exec/2/38\nsetState YACHT NAME · broadcast"]
-  BRANCH -->|CLOSED| GSTOFF["lights.GUEST ENTRANCE = OFF\nOSC → /exec/2/37\nsetState YACHT NAME · broadcast"]
+  A["POST /colour or /intensity"] --> V{"Target allowed?\nSubzone 0–4?"}
+  V -->|no| ERR["400 error"]
+  V -->|yes| ST["update Colours / Intensities\n(subzone 0 fills zones 1–4)\nsetState · broadcast · feedback push"]
+  ST --> LD{"Target ==\nLOWER DECK WET AREA?"}
+  LD -->|yes| SYNC["syncLdDoorSpots()"]
+  SYNC --> SAME{"value already stored\nfor this zone?"}
+  LD -->|no| SAME
+  SAME -->|yes| TWICE["OSC ×2 → deactivate, activate"]
+  SAME -->|no| ONCE["OSC ×1"]
         </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ EVENT MODE -->
+    <section id="eventmode">
+      <h2>POST /eventmode</h2>
+      <p>Body: <code>{ Target, State }</code>.</p>
+      <div class="note">
+        ON = disable the zone in ChamSys (lights ignore inputs). OFF =
+        re-enable the zone. No feedback push for event mode.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>ChamSys zone</th>
+              <th>State ON (disable)</th>
+              <th>State OFF (enable)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>EVENT MODE SD</td><td>1</td><td class="osc">/zone/1/disable</td><td class="osc">/zone/1/enable</td></tr>
+            <tr><td>EVENT MODE MD</td><td>2</td><td class="osc">/zone/2/disable</td><td class="osc">/zone/2/enable</td></tr>
+            <tr><td>EVENT MODE LD</td><td>3</td><td class="osc">/zone/3/disable</td><td class="osc">/zone/3/enable</td></tr>
+            <tr><td>EVENT MODE UW</td><td>4</td><td class="osc">/zone/4/disable</td><td class="osc">/zone/4/enable</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ GUEST ENTRANCE DOOR -->
+    <section id="guestentrance">
+      <h2>Guest Entrance door <span class="muted">(backend: HULL DOOR)</span></h2>
+      <div class="note">
+        Set via <code>POST /set · HULL DOOR · State: OPEN or CLOSED</code>.
+        Drives the <strong>GUEST ENTRANCE</strong> name light: ON when the
+        door opens, OFF when it closes. The door state is answered to the
+        client <em>before</em> the light logic runs.
+      </div>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart TD
+  A["POST /set · HULL DOOR"] --> B{State OPEN or CLOSED?}
+  B -->|no| ERR["400 error"]
+  B -->|yes| SAVE["setState HULL DOOR = State\nbroadcast · respond 200"]
+  SAVE --> BRANCH{State?}
+  BRANCH -->|OPEN| GON["lights.GUEST ENTRANCE = ON\nOSC → /exec/2/38"]
+  GON --> RESYNC["resyncYachtNameColours()\nre-fire stored YACHT NAME colours (×2)\nso the guest entrance name matches"]
+  BRANCH -->|CLOSED| GOFF["lights.GUEST ENTRANCE = OFF\nOSC → /exec/2/37"]
+  RESYNC --> DONE["setState YACHT NAME\nbroadcast · feedback push"]
+  GOFF --> DONE
+        </div>
+      </div>
+      <div class="note">
+        <strong>resyncYachtNameColours:</strong> if all four YACHT NAME
+        subzones hold the same colour, one all-zones colour executor is fired
+        (deactivate → activate); otherwise each set subzone is re-asserted
+        individually. Nothing is sent if no colour is stored.
+      </div>
+      <div class="warn">
+        The door change does <em>not</em> call
+        <a href="#ldspots">syncLdDoorSpots</a>. LD Door Spots only re-evaluate
+        on the next LOWER DECK WET AREA scene / colour / intensity request.
       </div>
     </section>
 
     <!-- ══════════════════════════════════════ YACHT NAME -->
     <section id="yachtname">
-      <h2>Yacht Name Logic</h2>
+      <h2>Yacht Name lights</h2>
       <div class="note">
-        Three light groups: <strong>UD SB</strong> (upper deck stbd name),
-        <strong>HULL DOOR</strong> (aft name — follows toggle), and
-        <strong>GUEST ENTRANCE</strong> (side guest entrance name — driven
-        automatically by the hull door sensor, see
-        <a href="#hulldoor">Hull Door Logic</a>).
+        Three light groups under <code>YACHT NAME.Lights</code>:
+        <strong>UD SB</strong> (upper deck stbd name →
+        <code>/t/name/side</code>), <strong>HULL DOOR</strong> (aft name →
+        <code>/t/name/aft</code>) and <strong>GUEST ENTRANCE</strong> (side
+        guest entrance name → <code>/t/name/guest</code>, also driven by the
+        <a href="#guestentrance">door</a>).
       </div>
 
       <h3>POST /toggle · YACHT NAME</h3>
@@ -1460,9 +534,9 @@ flowchart TD
         <div class="mermaid">
 flowchart TD
   A["POST /toggle · YACHT NAME"] --> B{"lights.UD SB == ON?"}
-  B -->|"turning OFF"| OFF["lights.UD SB = OFF\nOSC → /t/name/side/0\nlights.HULL DOOR = OFF\nOSC → /t/name/aft/0"]
-  B -->|"turning ON"| ON["lights.UD SB = ON\nOSC → /t/name/side/1\nlights.HULL DOOR = ON\nOSC → /t/name/aft/1"]
-  OFF --> SAVE["setState YACHT NAME · broadcast"]
+  B -->|"yes → turning OFF"| OFF["UD SB = OFF · /t/name/side/0\nHULL DOOR = OFF · /t/name/aft/0\nGUEST ENTRANCE = OFF · /t/name/guest/0"]
+  B -->|"no → turning ON"| ON["UD SB = ON · /t/name/side/1\nHULL DOOR = ON · /t/name/aft/1\nGUEST ENTRANCE = ON · /t/name/guest/1"]
+  OFF --> SAVE["setState YACHT NAME\nbroadcast · feedback push"]
   ON --> SAVE
         </div>
       </div>
@@ -1472,25 +546,27 @@ flowchart TD
         <div class="mermaid">
 flowchart TD
   A["POST /set · YACHT NAME\nState: ON or OFF\nInfo: UD SB or HULL DOOR"] --> B{"Info == 'UD SB'?"}
-  B -->|yes| UDK["lightKey = UD SB"]
-  B -->|"no (or blank)"| HDK["lightKey = HULL DOOR"]
-  UDK --> UDO["lights.UD SB = State\nOSC → /t/name/side/0 or 1"]
-  HDK --> HDO["lights.HULL DOOR = State\nOSC → /t/name/aft/0 or 1"]
-  UDO --> DONE["setState YACHT NAME · broadcast"]
-  HDO --> DONE
+  B -->|yes| UDK["lights.UD SB = State\nOSC → /t/name/side/0 or 1"]
+  B -->|"no (or blank)"| HDK["lights.HULL DOOR = State\nOSC → /t/name/aft/0 or 1"]
+  UDK --> DONE["setState YACHT NAME\nbroadcast · feedback push"]
+  HDK --> DONE
         </div>
+      </div>
+      <div class="note">
+        GUEST ENTRANCE cannot be set directly via <code>/set</code> — it
+        follows the door, or the all-names toggle.
       </div>
     </section>
 
     <!-- ══════════════════════════════════════ LD DOOR SPOTS -->
     <section id="ldspots">
-      <h2>LD Door Spots Logic</h2>
+      <h2>LD Door Spots</h2>
       <div class="note">
-        Spots on the inside surface of the hull door. ON only when door is OPEN
-        <em>and</em> the LD Wet Area has any active state.
+        Spots on the inside surface of the guest entrance door. ON only when
+        the door is OPEN <em>and</em> the LD Wet Area has any active state.
       </div>
 
-      <p><strong>syncLdDoorSpots() is called whenever:</strong></p>
+      <p><strong>syncLdDoorSpots() is called from:</strong></p>
       <div class="trigger-list">
         <span>POST /scene · LOWER DECK WET AREA</span>
         <span>POST /colour · LOWER DECK WET AREA</span>
@@ -1502,118 +578,67 @@ flowchart TD
 flowchart TD
   SYNC["syncLdDoorSpots()"] --> DOOR{"HULL DOOR == OPEN?"}
   DOOR -->|no| OFF_PATH["shouldBeOn = false"]
-  DOOR -->|yes| LDCHK{"isLdWetAreaActive?\nScene = ON/DIM/NIGHT\nOR State = ON\nOR any Colour subzone set"}
+  DOOR -->|yes| LDCHK{"isLdWetAreaActive?\nScene set and != OFF\nOR State == ON\nOR any Colour subzone set"}
   LDCHK -->|yes| ON_PATH["shouldBeOn = true"]
   LDCHK -->|no| OFF_PATH
   ON_PATH --> SON{"LD DOOR SPOTS already ON?"}
   SON -->|yes| NOP1["no change"]
-  SON -->|no| TURNON["setState: ON\nOSC → /s/ld-door-sp/1\nbroadcast"]
+  SON -->|no| TURNON["setState ON\nOSC → /s/ld-door-sp/1\nbroadcast"]
   OFF_PATH --> SOFF{"LD DOOR SPOTS already OFF?"}
   SOFF -->|yes| NOP2["no change"]
-  SOFF -->|no| TURNOFF["setState: OFF\nOSC → /s/ld-door-sp/0\nbroadcast"]
+  SOFF -->|no| TURNOFF["setState OFF\nOSC → /s/ld-door-sp/0\nbroadcast"]
         </div>
       </div>
 
       <div class="warn">
         If LD Door Spots appear stuck ON after the door closes, check the
-        Current State panel above — if HULL DOOR still shows OPEN, the sensor
-        hasn't sent the CLOSED update. Use the CLOSED button in the
-        <a href="#set">Set table</a> to force it.
+        Guest Entrance card on the control page — if it still shows OPEN, the
+        sensor hasn't sent the CLOSED update. Use its Closed button to force
+        it, then re-send any LOWER DECK WET AREA scene to re-evaluate.
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ FEEDBACK -->
+    <section id="feedback">
+      <h2>Feedback / GET /state</h2>
+      <p>
+        <code>GET /state?id=EVERYTHING</code> (or <code>id=&lt;TARGET&gt;</code>)
+        returns <code>{ Target, Info, State }</code> payloads for the feedback
+        targets. The same payload list is POSTed to the external endpoint
+        after every state-changing request (except event mode).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>Info</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>YACHT NAME</td><td class="osc">UD SB</td><td>lights.UD SB</td></tr>
+            <tr><td>YACHT NAME</td><td class="osc">HULL DOOR OPEN|CLOSED</td><td>lights.HULL DOOR <span class="muted">(aft name)</span></td></tr>
+            <tr><td>YACHT NAME</td><td class="osc">GUEST ENTRANCE</td><td>lights.GUEST ENTRANCE</td></tr>
+            <tr><td>every other feedback target</td><td>stored Info or <code>""</code></td><td>State</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        Feedback targets: POOL, WHIRLPOOL, YACHT NAME, UNDERWATER ALL / STERN /
+        AFT PS / AFT SB / MID PS / MID SB / FWD / UP BOW, SUN DECK FWD SPOTS /
+        STRIPS, MAIN DECK AFT SPOTS POOL AND TABLE / AFT SPOTS / AFT STRIPS /
+        COURTESY, LD DOOR SPOTS, LOWER DECK COURTESY.
+        <code>GET /</code> returns the full raw state array instead.
       </div>
     </section>
 
     <script>
-      // ── Request log ──────────────────────────────────────────
-      function addLog(msg, ok) {
-        const panel = document.getElementById("log-panel");
-        const empty = panel.querySelector(".log-empty");
-        if (empty) empty.remove();
-        const el = document.createElement("div");
-        el.className = ok ? "log-ok" : "log-err";
-        el.textContent = msg;
-        panel.insertBefore(el, panel.firstChild);
-        while (panel.children.length > 40) panel.removeChild(panel.lastChild);
-      }
-
-      // ── Fire a POST ──────────────────────────────────────────
-      async function fire(endpoint, body) {
-        const ts = new Date().toTimeString().slice(0, 8);
-        const prefix = `${ts}  POST /${endpoint}  ${JSON.stringify(body)}`;
-        try {
-          const res = await fetch(`/${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-          const data = await res.json();
-          addLog(`${prefix}  →  ${res.status} ${JSON.stringify(data)}`, res.ok);
-        } catch (e) {
-          addLog(`${prefix}  →  ERROR: ${e.message}`, false);
-        }
-        refreshState();
-      }
-
-      // ── Colour / Intensity ───────────────────────────────────
-      function sendColour() {
-        fire("colour", {
-          Target: document.getElementById("ci-target").value,
-          Subzone: document.getElementById("ci-subzone").value,
-          Colour: parseInt(document.getElementById("ci-colour").value, 10),
-        });
-      }
-      function sendIntensity() {
-        fire("intensity", {
-          Target: document.getElementById("ci-target").value,
-          Subzone: document.getElementById("ci-subzone").value,
-          Intensity: document.getElementById("ci-intensity").value,
-        });
-      }
-
-      // ── State display ────────────────────────────────────────
-      async function refreshState() {
-        try {
-          const res = await fetch("/");
-          const states = await res.json();
-          document.getElementById("state-grid").innerHTML = states
-            .map((s) => {
-              let detail, cls;
-
-              if (s.Target === "YACHT NAME") {
-                const ud = (s.Lights || {})["UD SB"] || "OFF";
-                const hd = (s.Lights || {})["HULL DOOR"] || "OFF";
-                const ge = (s.Lights || {})["GUEST ENTRANCE"] || "OFF";
-                detail = `UD:${ud} HD:${hd} GE:${ge}`;
-                cls = ud === "ON" || hd === "ON" || ge === "ON" ? "chip-on" : "chip-off";
-              } else if (s.Target === "HULL DOOR") {
-                detail = s.State;
-                cls = s.State === "OPEN" ? "chip-open" : "chip-closed";
-              } else if (s.Target === "FIRE ALARM") {
-                detail = s.State;
-                cls = s.State === "SOUNDING" ? "chip-alarm" : "chip-off";
-              } else if (s.Scene && s.Scene !== "") {
-                detail = s.Scene;
-                cls = s.Scene === "OFF" ? "chip-off" : "chip-active";
-              } else {
-                detail = s.State;
-                cls = s.State === "ON" ? "chip-on" : "chip-off";
-              }
-
-              return `<span class="state-chip ${cls}" title="${s.Target}">${s.Target}: ${detail}</span>`;
-            })
-            .join("");
-        } catch {
-          document.getElementById("state-grid").innerHTML =
-            '<span class="state-chip chip-alarm">Cannot reach server — is it running?</span>';
-        }
-      }
-
-      // ── Init ─────────────────────────────────────────────────
       mermaid.initialize({
         startOnLoad: true,
         theme: "default",
         flowchart: { curve: "basis", padding: 20 },
       });
-      refreshState();
     </script>
   </body>
 </html>

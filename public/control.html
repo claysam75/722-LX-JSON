@@ -89,6 +89,9 @@
       ];
 
       const STATUS_TARGETS = ["FIRE ALARM", "HULL DOOR", "VESSEL"];
+      // Display labels that differ from the backend target name.
+      const DISPLAY_NAMES = { "HULL DOOR": "GUEST ENTRANCE" };
+      const displayName = (t) => DISPLAY_NAMES[t] || t;
       const EVENT_MODE_TARGETS = [
         "EVENT MODE SD",
         "EVENT MODE MD",
@@ -746,8 +749,7 @@
       <h1>DMX-PC Control</h1>
       <div class="conn" id="conn"><span class="conn-dot"></span><span id="conn-text">Connecting…</span></div>
       <div class="header-right">
-        <a href="/index.html">Live State</a>
-        <a href="/diagrams.html" target="_blank">Debug Ref ↗</a>
+        <a href="/diagrams.html" target="_blank">System Reference ↗</a>
         <button class="theme-toggle" id="theme-toggle"></button>
       </div>
     </div>
@@ -1021,7 +1023,7 @@
           const on = lights[key] === "ON";
           const ctrl = info
             ? onOffButtons("set", "YACHT NAME", lights[key], `data-info="${info}"`)
-            : `<span class="auto" title="Follows hull door">auto · ${lights[key] || "OFF"}</span>`;
+            : `<span class="auto" title="Follows guest entrance door">auto · ${lights[key] || "OFF"}</span>`;
           return `<div class="name-light-row${on ? " name-on" : ""}">
             <span class="name-light-dot"></span>
             <span class="name-light-label">${label}</span>
@@ -1066,7 +1068,7 @@
         div.innerHTML = `
           <div class="status-head">
             <div class="status-dot"></div>
-            <span class="status-name">${esc(t)}</span>
+            <span class="status-name">${esc(displayName(t))}</span>
             <span class="status-value">${esc(value)}</span>
           </div>
           ${controls}`;
