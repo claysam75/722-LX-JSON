@@ -1060,6 +1060,7 @@ const VESSEL_SCENE_OSC = {
     "/v/allon/name2",
     "/v/allon/ld",
     "/v/allon/ud",
+    "/exec/2/83",
   ],
   ALL_OFF: [
     "/v/alloff/sd",
@@ -1068,14 +1069,23 @@ const VESSEL_SCENE_OSC = {
     "/v/alloff/name2",
     "/v/alloff/ld",
     "/v/alloff/ud",
+    "/exec/2/82",
   ],
-  UNDERWAY: ["/v/uw/sd", "/v/uw/md", "/v/uw/name1", "/v/uw/name2", "/v/uw/ld"],
+  UNDERWAY: [
+    "/v/uw/sd",
+    "/v/uw/md",
+    "/v/uw/name1",
+    "/v/uw/name2",
+    "/v/uw/ld",
+    "/exec/10/23",
+  ],
   DOCK_GUESTS: [
     "/v/dockg/sd",
     "/v/dockg/md",
     "/v/dockg/name1",
     "/v/dockg/name2",
     "/v/dockg/ld",
+    "/exec/10/23",
   ],
   DOCK_CREW: [
     "/v/dockc/sd",
@@ -1083,6 +1093,7 @@ const VESSEL_SCENE_OSC = {
     "/v/dockc/name1",
     "/v/dockc/name2",
     "/v/dockc/ld",
+    "/exec/10/24",
   ],
   ANCHOR_GUESTS: [
     "/v/anchg/sd",
@@ -1090,6 +1101,7 @@ const VESSEL_SCENE_OSC = {
     "/v/anchg/name1",
     "/v/anchg/name2",
     "/v/anchg/ld",
+    "/exec/10/23",
   ],
   ANCHOR_CREW: [
     "/v/anchc/sd",
@@ -1097,6 +1109,7 @@ const VESSEL_SCENE_OSC = {
     "/v/anchc/name1",
     "/v/anchc/name2",
     "/v/anchc/ld",
+    "/exec/10/24",
   ],
   MAX_LIGHTING: [
     "/v/max/sd",
@@ -1104,6 +1117,7 @@ const VESSEL_SCENE_OSC = {
     "/v/max/name1",
     "/v/max/name2",
     "/v/max/ld",
+    "/exec/10/25",
   ],
   HELI_OPS: [
     "/v/heliops/sd",
@@ -1111,6 +1125,7 @@ const VESSEL_SCENE_OSC = {
     "/v/heliops/name1",
     "/v/heliops/name2",
     "/v/heliops/ld",
+    "/exec/10/23",
   ],
   PARTY: [
     "/v/party/sd",
