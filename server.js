@@ -736,6 +736,21 @@ app.post("/scene", (req, res) => {
       }
 
       break;
+    case "UPPER DECK EXTERIOR AFT":
+      if (Scene === "ON") {
+        sendOSC("/exec/10/25", []);
+        log("OSC: Upper Deck Exterior Aft Scene ON");
+      } else if (Scene === "DIM") {
+        sendOSC("/exec/10/24", []);
+        log("OSC: Upper Deck Exterior Aft Scene DIM");
+      } else if (Scene === "NIGHT") {
+        sendOSC("/exec/10/23", []);
+        log("OSC: Upper Deck Exterior Aft Scene NIGHT");
+      } else if (Scene === "OFF") {
+        sendOSC("/exec/10/22", []);
+        log("OSC: Upper Deck Exterior Aft Scene OFF");
+      }
+      break;
     case "MAIN DECK EXTERIOR AFT":
       if (Scene === "ON") {
         sendOSC("/exec/10/10", []);

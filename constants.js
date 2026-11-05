@@ -1059,6 +1059,7 @@ const VESSEL_SCENE_OSC = {
     "/v/allon/name1",
     "/v/allon/name2",
     "/v/allon/ld",
+    "/v/allon/ud",
   ],
   ALL_OFF: [
     "/v/alloff/sd",
@@ -1066,6 +1067,7 @@ const VESSEL_SCENE_OSC = {
     "/v/alloff/name1",
     "/v/alloff/name2",
     "/v/alloff/ld",
+    "/v/alloff/ud",
   ],
   UNDERWAY: ["/v/uw/sd", "/v/uw/md", "/v/uw/name1", "/v/uw/name2", "/v/uw/ld"],
   DOCK_GUESTS: [
@@ -1177,6 +1179,7 @@ module.exports = {
     "MAIN DECK AFT STRIPS",
     "MAIN DECK COURTESY",
     "SUN DECK EXTERIOR FWD",
+    "UPPER DECK EXTERIOR AFT",
     "MAIN DECK EXTERIOR AFT",
     "LOWER DECK WET AREA",
     "LD DOOR SPOTS",
@@ -1253,6 +1256,7 @@ module.exports = {
 
   SCENE_TARGETS: [
     "SUN DECK EXTERIOR FWD",
+    "UPPER DECK EXTERIOR AFT",
     "MAIN DECK EXTERIOR AFT",
     "LOWER DECK WET AREA",
     "VESSEL",

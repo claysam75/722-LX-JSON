@@ -73,6 +73,7 @@
 
       const SCENE_TARGETS = [
         "SUN DECK EXTERIOR FWD",
+        "UPPER DECK EXTERIOR AFT",
         "MAIN DECK EXTERIOR AFT",
         "LOWER DECK WET AREA",
         "VESSEL",
@@ -101,6 +102,7 @@
 
       const DECK_GROUPS = [
         { label: "Sun Deck", test: (t) => t.startsWith("SUN DECK") || t === "WHIRLPOOL" },
+        { label: "Upper Deck", test: (t) => t.startsWith("UPPER DECK") },
         { label: "Main Deck", test: (t) => t.startsWith("MAIN DECK") || ["POOL", "YACHT NAME"].includes(t) },
         { label: "Lower Deck", test: (t) => t.startsWith("LOWER DECK") || t.startsWith("LD ") },
         { label: "Underwater", test: (t) => t.startsWith("UNDERWATER") },

@@ -183,7 +183,7 @@ Sets a scene for an area.
 { "Target": "SUN DECK EXTERIOR FWD", "Scene": "ON | DIM | NIGHT | OFF" }
 ```
 
-**Targets:** `SUN DECK EXTERIOR FWD`, `MAIN DECK EXTERIOR AFT`, `LOWER DECK WET AREA`, `VESSEL`
+**Targets:** `SUN DECK EXTERIOR FWD`, `UPPER DECK EXTERIOR AFT`, `MAIN DECK EXTERIOR AFT`, `LOWER DECK WET AREA`, `VESSEL`
 
 `LOWER DECK WET AREA` scenes re-evaluate the LD door spots.
 
