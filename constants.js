@@ -1185,6 +1185,7 @@ module.exports = {
     "LD DOOR SPOTS",
     "VESSEL",
     "LOWER DECK COURTESY",
+    "EXTERNAL STAIRS",
   ],
 
   TOGGLE_TARGETS: [
@@ -1212,6 +1213,7 @@ module.exports = {
     "HULL DOOR",
     "LD DOOR SPOTS",
     "LOWER DECK COURTESY",
+    "EXTERNAL STAIRS",
   ],
 
   FEEDBACK_TARGETS: [
@@ -1234,6 +1236,7 @@ module.exports = {
     "MAIN DECK COURTESY",
     "LD DOOR SPOTS",
     "LOWER DECK COURTESY",
+    "EXTERNAL STAIRS",
   ],
 
   COLOUR_INTENSITY_TARGETS: [

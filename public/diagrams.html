@@ -292,6 +292,7 @@ flowchart LR
             <tr><td>MAIN DECK AFT STRIPS</td><td>ON / OFF</td><td class="osc">/s/md-a-st/1</td><td class="osc">/s/md-a-st/0</td><td>—</td></tr>
             <tr><td>MAIN DECK COURTESY</td><td>ON / OFF</td><td class="osc">/s/md-a-c/1</td><td class="osc">/s/md-a-c/0</td><td>—</td></tr>
             <tr><td>LOWER DECK COURTESY</td><td>ON / OFF</td><td class="osc">/exec/2/140</td><td class="osc">/exec/2/139</td><td>—</td></tr>
+            <tr><td>EXTERNAL STAIRS</td><td>ON / OFF</td><td class="osc">/exec/2/82</td><td class="osc">/exec/2/83</td><td>—</td></tr>
             <tr><td>LD DOOR SPOTS</td><td>ON / OFF</td><td class="osc">/s/ld-door-sp/1</td><td class="osc">/s/ld-door-sp/0</td><td>Normally driven by <a href="#ldspots">syncLdDoorSpots</a></td></tr>
             <tr><td>FIRE ALARM</td><td>SILENT / SOUNDING</td><td class="muted" colspan="2">no OSC — state only</td><td>Feedback push</td></tr>
             <tr><td>HULL DOOR <span class="muted">(Guest Entrance)</span></td><td>OPEN / CLOSED</td><td class="osc">/exec/2/38 <span class="muted">(OPEN)</span></td><td class="osc">/exec/2/37 <span class="muted">(CLOSED)</span></td><td>See <a href="#guestentrance">Guest Entrance door</a></td></tr>
@@ -629,7 +630,7 @@ flowchart TD
         Feedback targets: POOL, WHIRLPOOL, YACHT NAME, UNDERWATER ALL / STERN /
         AFT PS / AFT SB / MID PS / MID SB / FWD / UP BOW, SUN DECK FWD SPOTS /
         STRIPS, MAIN DECK AFT SPOTS POOL AND TABLE / AFT SPOTS / AFT STRIPS /
-        COURTESY, LD DOOR SPOTS, LOWER DECK COURTESY.
+        COURTESY, LD DOOR SPOTS, LOWER DECK COURTESY, EXTERNAL STAIRS.
         <code>GET /</code> returns the full raw state array instead.
       </div>
     </section>

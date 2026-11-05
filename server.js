@@ -108,7 +108,9 @@ function sendColourOSC(target, zone, colour, reassert) {
   }
   if (reassert) {
     sendOSC(oscAddress, []);
-    log(`OSC: ${target} zone ${zone} colour ${colour} deactivate → ${oscAddress}`);
+    log(
+      `OSC: ${target} zone ${zone} colour ${colour} deactivate → ${oscAddress}`,
+    );
   }
   sendOSC(oscAddress, []);
   log(`OSC: ${target} zone ${zone} colour ${colour} → ${oscAddress}`);
@@ -553,6 +555,15 @@ app.post("/set", (req, res) => {
       } else {
         sendOSC("/exec/2/139");
         log("OSC: Lower Deck Courtesy OFF");
+      }
+      break;
+    case "EXTERNAL STAIRS":
+      if (State == "ON") {
+        sendOSC("/exec/2/83");
+        log("OSC: External Stairs ON");
+      } else {
+        sendOSC("/exec/2/82");
+        log("OSC: External Stairs OFF");
       }
       break;
     default:
