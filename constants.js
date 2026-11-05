@@ -1061,6 +1061,7 @@ const VESSEL_SCENE_OSC = {
     "/v/allon/ld",
     "/v/allon/ud",
     "/exec/2/83",
+    "/exec/10/25",
   ],
   ALL_OFF: [
     "/v/alloff/sd",
@@ -1070,6 +1071,7 @@ const VESSEL_SCENE_OSC = {
     "/v/alloff/ld",
     "/v/alloff/ud",
     "/exec/2/82",
+    "/exec/10/22",
   ],
   UNDERWAY: [
     "/v/uw/sd",
