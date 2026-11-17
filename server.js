@@ -557,13 +557,13 @@ app.post("/set", (req, res) => {
         log("OSC: Lower Deck Courtesy OFF");
       }
       break;
-    case "EXTERNAL STAIRS":
+    case "STAIRS":
       if (State == "ON") {
         sendOSC("/exec/2/83");
-        log("OSC: External Stairs ON");
+        log("OSC: Stairs ON");
       } else {
         sendOSC("/exec/2/82");
-        log("OSC: External Stairs OFF");
+        log("OSC: Stairs OFF");
       }
       break;
     default:
