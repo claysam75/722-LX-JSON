@@ -66,6 +66,7 @@
         "MAIN DECK AFT SPOTS POOL AND TABLE",
         "MAIN DECK AFT SPOTS",
         "MAIN DECK AFT STRIPS",
+        "MAIN DECK STRIPS PS/SB",
         "MAIN DECK COURTESY",
         "LD DOOR SPOTS",
         "LOWER DECK COURTESY",
@@ -247,6 +248,13 @@
         cursor: pointer;
       }
       .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+
+      .setting-toggle.is-on {
+        background: var(--on-bg);
+        border-color: var(--on-border);
+        color: var(--on-strong);
+      }
+      .setting-toggle:disabled { opacity: 0.5; cursor: wait; }
 
       /* ── Layout ──────────────────────────────────────── */
 
@@ -753,6 +761,8 @@
       <h1>DMX-PC Control</h1>
       <div class="conn" id="conn"><span class="conn-dot"></span><span id="conn-text">Connecting…</span></div>
       <div class="header-right">
+        <button class="theme-toggle setting-toggle" id="scene-sync-toggle" disabled
+          title="When on, a deck scene also updates the state of that deck's set targets (OFF → off, ON/DIM/NIGHT → on) without sending their OSC, to match Crestron's tracking.">Scene sync: …</button>
         <a href="/diagrams.html" target="_blank">System Reference ↗</a>
         <button class="theme-toggle" id="theme-toggle"></button>
       </div>
@@ -1380,6 +1390,36 @@
       socket.on("state:update", (update) => {
         stateMap[update.Target] = update;
         renderTarget(update.Target);
+      });
+
+      /* ── Settings ────────────────────────────────────── */
+
+      const sceneSyncBtn = document.getElementById("scene-sync-toggle");
+      let settings = {};
+      function renderSettings() {
+        const on = !!settings.SceneStateSync;
+        sceneSyncBtn.textContent = `Scene sync: ${on ? "On" : "Off"}`;
+        sceneSyncBtn.classList.toggle("is-on", on);
+        sceneSyncBtn.disabled = false;
+      }
+      sceneSyncBtn.addEventListener("click", async () => {
+        sceneSyncBtn.disabled = true;
+        try {
+          const res = await fetch("/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ SceneStateSync: !settings.SceneStateSync }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          // The server broadcasts "settings" to every client, which re-renders.
+        } catch (e) {
+          addLog({ message: `ERROR POST /settings → ${e.message}`, timestamp: new Date().toISOString() }, "error");
+          sceneSyncBtn.disabled = false;
+        }
+      });
+      socket.on("settings", (s) => {
+        settings = s;
+        renderSettings();
       });
 
       socket.on("log:history", (entries) => {

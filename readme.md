@@ -97,6 +97,7 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the feedback targets. 
 - `MAIN DECK AFT SPOTS POOL AND TABLE`
 - `MAIN DECK AFT SPOTS`
 - `MAIN DECK AFT STRIPS`
+- `MAIN DECK STRIPS PS/SB`
 - `MAIN DECK COURTESY`
 - `LD DOOR SPOTS`
 - `LOWER DECK COURTESY`
@@ -163,6 +164,7 @@ Sets a target to an explicit state.
 - `MAIN DECK AFT SPOTS POOL AND TABLE`
 - `MAIN DECK AFT SPOTS`
 - `MAIN DECK AFT STRIPS`
+- `MAIN DECK STRIPS PS/SB`
 - `MAIN DECK COURTESY`
 - `LOWER DECK COURTESY`
 - `STAIRS`
@@ -190,6 +192,8 @@ Sets a scene for an area.
 **Targets:** `SUN DECK EXTERIOR FWD`, `UPPER DECK EXTERIOR AFT`, `MAIN DECK EXTERIOR AFT`, `LOWER DECK WET AREA`, `VESSEL`
 
 `LOWER DECK WET AREA` scenes re-evaluate the LD door spots.
+
+When the `SceneStateSync` setting is on, deck scenes also update the state of that deck's set targets (see **Scene state sync** under Automation).
 
 **Vessel presets**
 
@@ -262,6 +266,13 @@ Sets the intensity for a target, optionally scoped to a subzone. If every subzon
 - `OPEN` → `YACHT NAME.Lights["GUEST ENTRANCE"] = ON`, OSC `/exec/2/38`, then the stored `YACHT NAME` colours are re-asserted (all-subzone executor if every subzone matches, otherwise per subzone) so the guest entrance name comes up matching the other name lights.
 - `CLOSED` → `GUEST ENTRANCE = OFF`, OSC `/exec/2/37`.
 
+**Scene state sync** (testing; toggled by the `SceneStateSync` setting, off by default). Crestron treats a deck scene as also switching that deck's set targets, so `/scene` mirrors it in our state: `OFF` → linked targets `OFF`, `ON`/`DIM`/`NIGHT` → `ON`. **No OSC is sent for the linked targets**, because the ChamSys scene already holds their levels. This stops users having to double-press those targets after a scene change. Links are in `SCENE_LINKED_SET_TARGETS` in `constants.js`:
+
+- `MAIN DECK EXTERIOR AFT` → `MAIN DECK AFT SPOTS POOL AND TABLE`, `MAIN DECK AFT SPOTS`, `MAIN DECK AFT STRIPS`, `MAIN DECK STRIPS PS/SB`, `MAIN DECK COURTESY`
+- `SUN DECK EXTERIOR FWD` → `SUN DECK FWD SPOTS`, `SUN DECK FWD STRIPS`
+
+Toggle it from the control panel header ("Scene sync"), or with `POST /settings` `{ "SceneStateSync": true | false }`. `GET /settings` returns the current settings. Settings persist in `state/settings.json`.
+
 **LD door spots.** `syncLdDoorSpots()` runs after any `/scene`, `/colour` or `/intensity` request for `LOWER DECK WET AREA`. `LD DOOR SPOTS` is turned ON when the door is `OPEN` **and** the wet area is active (scene set and not `OFF`, or `State == ON`, or any colour subzone set); otherwise OFF. It is not re-evaluated on the door change itself.
 
 ---
@@ -274,6 +285,7 @@ Sets the intensity for a target, optionally scoped to a subzone. If every subzon
 | `state:update` | Server → Client | Single updated state object                                                                                                  |
 | `log`          | Server → Client | `{ message, timestamp, group }` — `group` is shared by every line produced by one HTTP request or socket connection, including async lines (external push failures, vessel preset sequences); `null` otherwise |
 | `log:history`  | Server → Client | Array of the last 500 log entries (emitted on connection)                                                                    |
+| `settings`     | Server → Client | `{ SceneStateSync }` — emitted on connection and whenever a setting changes                                                  |
 
 ---
 

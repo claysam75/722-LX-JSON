@@ -7,8 +7,16 @@ const {
 } = require("./constants");
 
 const STATE_FILE = path.join(__dirname, "/state/state.json");
+const SETTINGS_FILE = path.join(__dirname, "/state/settings.json");
 
 const state = new Map();
+
+// Runtime feature switches, persisted separately from target state so they
+// never appear in state feedback payloads.
+const DEFAULT_SETTINGS = {
+  SceneStateSync: false,
+};
+let settings = { ...DEFAULT_SETTINGS };
 
 /* --------------------------------------------------
    Initialise Default State
@@ -162,9 +170,52 @@ function getAllStates() {
   return Array.from(state.values());
 }
 
+/* --------------------------------------------------
+   Settings
+-------------------------------------------------- */
+
+function loadSettings() {
+  settings = { ...DEFAULT_SETTINGS };
+  if (!fs.existsSync(SETTINGS_FILE)) return;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SETTINGS_FILE));
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+      if (typeof parsed[key] === typeof DEFAULT_SETTINGS[key]) {
+        settings[key] = parsed[key];
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load settings file — using defaults", err);
+  }
+}
+
+function getSettings() {
+  return { ...settings };
+}
+
+// Only known keys with the correct type are applied; returns the new settings.
+function updateSettings(patch) {
+  for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    if (key in patch && typeof patch[key] === typeof DEFAULT_SETTINGS[key]) {
+      settings[key] = patch[key];
+    }
+  }
+  try {
+    const tempFile = SETTINGS_FILE + ".tmp";
+    fs.writeFileSync(tempFile, JSON.stringify(settings, null, 2));
+    fs.renameSync(tempFile, SETTINGS_FILE);
+  } catch (err) {
+    console.error("Failed to save settings file", err);
+  }
+  return getSettings();
+}
+
 module.exports = {
   loadState,
   getState,
   setState,
   getAllStates,
+  loadSettings,
+  getSettings,
+  updateSettings,
 };

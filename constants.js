@@ -1195,6 +1195,7 @@ module.exports = {
     "MAIN DECK AFT SPOTS POOL AND TABLE",
     "MAIN DECK AFT SPOTS",
     "MAIN DECK AFT STRIPS",
+    "MAIN DECK STRIPS PS/SB",
     "MAIN DECK COURTESY",
     "SUN DECK EXTERIOR FWD",
     "UPPER DECK EXTERIOR AFT",
@@ -1227,6 +1228,7 @@ module.exports = {
     "MAIN DECK AFT SPOTS POOL AND TABLE",
     "MAIN DECK AFT SPOTS",
     "MAIN DECK AFT STRIPS",
+    "MAIN DECK STRIPS PS/SB",
     "MAIN DECK COURTESY",
     "FIRE ALARM",
     "HULL DOOR",
@@ -1253,6 +1255,7 @@ module.exports = {
     "MAIN DECK AFT SPOTS POOL AND TABLE",
     "MAIN DECK AFT SPOTS",
     "MAIN DECK AFT STRIPS",
+    "MAIN DECK STRIPS PS/SB",
     "MAIN DECK COURTESY",
     "LD DOOR SPOTS",
     "LOWER DECK COURTESY",
@@ -1285,6 +1288,22 @@ module.exports = {
     "LOWER DECK WET AREA",
     "VESSEL",
   ],
+
+  // Crestron tracks these set targets as following their deck's scene:
+  // OFF → OFF, any other scene (ON/DIM/NIGHT) → ON. When the
+  // SceneStateSync setting is enabled, /scene mirrors that in our state
+  // WITHOUT sending the targets' OSC (the ChamSys scene already holds their
+  // intensities — firing the individual playbacks would override them).
+  SCENE_LINKED_SET_TARGETS: {
+    "MAIN DECK EXTERIOR AFT": [
+      "MAIN DECK AFT SPOTS POOL AND TABLE",
+      "MAIN DECK AFT SPOTS",
+      "MAIN DECK AFT STRIPS",
+      "MAIN DECK STRIPS PS/SB",
+      "MAIN DECK COURTESY",
+    ],
+    "SUN DECK EXTERIOR FWD": ["SUN DECK FWD SPOTS", "SUN DECK FWD STRIPS"],
+  },
 
   TARGET_OSC_MAPPINGS: {
     POOL: "MD Pool*",

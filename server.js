@@ -4,7 +4,15 @@ const { Server } = require("socket.io");
 const http = require("http");
 const { AsyncLocalStorage } = require("async_hooks");
 const { sendOSC2, sendOSC } = require("./oscClient");
-const { getState, setState, getAllStates, loadState } = require("./state");
+const {
+  getState,
+  setState,
+  getAllStates,
+  loadState,
+  loadSettings,
+  getSettings,
+  updateSettings,
+} = require("./state");
 const {
   SET_TARGETS,
   TOGGLE_TARGETS,
@@ -19,6 +27,7 @@ const {
   VESSEL_SCENE_OSC_GAP_MS,
   FEEDBACK_TARGETS,
   TARGET_ALIASES,
+  SCENE_LINKED_SET_TARGETS,
 } = require("./constants");
 
 const app = express();
@@ -38,6 +47,7 @@ app.use(express.static("public"));
 const PORT = 4002;
 
 loadState();
+loadSettings();
 
 function broadcastStateUpdate(target) {
   io.emit("state:update", getState(target));
@@ -154,6 +164,22 @@ io.on("connection", (socket) => {
   socket.emit("log:history", logHistory);
   withLogGroup(() => log("New client connected"));
   socket.emit("state:all", getAllStates());
+  socket.emit("settings", getSettings());
+});
+
+app.get("/settings", (req, res) => {
+  res.json(getSettings());
+});
+
+app.post("/settings", (req, res) => {
+  const { SceneStateSync } = req.body || {};
+  if (typeof SceneStateSync !== "boolean") {
+    return res.status(400).json({ error: "SceneStateSync must be true or false" });
+  }
+  const updated = updateSettings({ SceneStateSync });
+  log(`Setting: scene state sync ${SceneStateSync ? "ENABLED" : "DISABLED"}`);
+  io.emit("settings", updated);
+  res.json(updated);
 });
 
 app.get("/", (req, res) => {
@@ -530,6 +556,15 @@ app.post("/set", (req, res) => {
         log("OSC: Main Deck Aft Strips OFF");
       }
       break;
+    case "MAIN DECK STRIPS PS/SB":
+      if (State == "ON") {
+        sendOSC("/exec/2/95");
+        log("OSC: Main Deck Strips PS/SB ON");
+      } else {
+        sendOSC("/exec/2/94");
+        log("OSC: Main Deck Strips PS/SB OFF");
+      }
+      break;
     case "MAIN DECK COURTESY":
       if (State == "ON") {
         sendOSC("/s/md-a-c/1");
@@ -719,6 +754,22 @@ async function sendOSCSequence(addresses, gapMs) {
   }
 }
 
+// Mirror Crestron's own tracking: a deck scene also flips the deck's set
+// targets (OFF → OFF, ON/DIM/NIGHT → ON). State only — no OSC is sent, as the
+// ChamSys scene already sets those fixtures' levels.
+function syncSceneLinkedTargets(sceneTarget, scene) {
+  const linked = SCENE_LINKED_SET_TARGETS[sceneTarget];
+  if (!linked || !getSettings().SceneStateSync) return;
+
+  const newState = scene === "OFF" ? "OFF" : "ON";
+  for (const target of linked) {
+    if (getState(target)?.State === newState) continue;
+    setState(target, { State: newState });
+    log(`Scene sync: ${target} → ${newState} (state only, no OSC)`);
+    broadcastStateUpdate(target);
+  }
+}
+
 app.post("/scene", (req, res) => {
   const { Target, Scene } = req.body;
   log(`Scene request: ${Target} -> ${Scene}`);
@@ -830,6 +881,8 @@ app.post("/scene", (req, res) => {
     default:
       log(`WARN: No OSC mapping for scene target: ${Target}`);
   }
+
+  syncSceneLinkedTargets(Target, Scene);
 
   broadcastStateUpdate(Target);
   pushStateToExternal();
