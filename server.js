@@ -566,6 +566,15 @@ app.post("/set", (req, res) => {
         log("OSC: Stairs OFF");
       }
       break;
+    case "FLAGMAST":
+      if (State == "ON") {
+        sendOSC("/exec/2/113");
+        log("OSC: Flagmast ON");
+      } else {
+        sendOSC("/exec/2/112");
+        log("OSC: Flagmast OFF");
+      }
+      break;
     default:
       log(`WARN: No OSC mapping for toggle target: ${Target}`);
   }

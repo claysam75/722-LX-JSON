@@ -1072,6 +1072,7 @@ const VESSEL_SCENE_OSC = {
     "/v/alloff/ud",
     "/exec/2/82",
     "/exec/10/22",
+    "/exec/2/112",
   ],
   UNDERWAY: [
     "/v/uw/sd",
@@ -1203,6 +1204,7 @@ module.exports = {
     "VESSEL",
     "LOWER DECK COURTESY",
     "STAIRS",
+    "FLAGMAST",
   ],
 
   TOGGLE_TARGETS: [
@@ -1231,6 +1233,7 @@ module.exports = {
     "LD DOOR SPOTS",
     "LOWER DECK COURTESY",
     "STAIRS",
+    "FLAGMAST",
   ],
 
   FEEDBACK_TARGETS: [
@@ -1254,6 +1257,7 @@ module.exports = {
     "LD DOOR SPOTS",
     "LOWER DECK COURTESY",
     "STAIRS",
+    "FLAGMAST",
   ],
 
   COLOUR_INTENSITY_TARGETS: [
