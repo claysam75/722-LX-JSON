@@ -1073,6 +1073,8 @@ const VESSEL_SCENE_OSC = {
     "/exec/2/82",
     "/exec/10/22",
     "/exec/2/112",
+    "/exec/2/124",
+    "/exec/2/139",
   ],
   UNDERWAY: [
     "/v/uw/sd",
