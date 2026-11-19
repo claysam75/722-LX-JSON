@@ -97,7 +97,7 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the feedback targets. 
 - `MAIN DECK AFT SPOTS POOL AND TABLE`
 - `MAIN DECK AFT SPOTS`
 - `MAIN DECK AFT STRIPS`
-- `MAIN DECK STRIPS PS/SB`
+- `MAIN DECK PS AND STB STRIPS`
 - `MAIN DECK COURTESY`
 - `LD DOOR SPOTS`
 - `LOWER DECK COURTESY`
@@ -165,7 +165,7 @@ Sets a target to an explicit state.
 - `MAIN DECK AFT SPOTS POOL AND TABLE`
 - `MAIN DECK AFT SPOTS`
 - `MAIN DECK AFT STRIPS`
-- `MAIN DECK STRIPS PS/SB`
+- `MAIN DECK PS AND STB STRIPS`
 - `MAIN DECK COURTESY`
 - `LOWER DECK COURTESY`
 - `STAIRS`
@@ -273,7 +273,7 @@ Sets the intensity for a target, optionally scoped to a subzone. If every subzon
 - `ON`/`DIM`/`NIGHT` → linked targets `ON`, **state only, no OSC**. The ChamSys scene already holds their levels, and firing the individual playbacks would override them.
 - `OFF` → linked targets `OFF`. If the `SceneSyncOffOSC` setting is on (the default), **each target's OFF OSC is also sent** (the same address as `POST /set … OFF`), so the individual ChamSys execs are released and match our state. This is sent even for targets already tracked as `OFF`. With `SceneSyncOffOSC` off, OFF scenes update state only. Links are in `SCENE_LINKED_SET_TARGETS` in `constants.js`:
 
-- `MAIN DECK EXTERIOR AFT` → `MAIN DECK AFT SPOTS POOL AND TABLE`, `MAIN DECK AFT SPOTS`, `MAIN DECK AFT STRIPS`, `MAIN DECK STRIPS PS/SB`, `MAIN DECK COURTESY`
+- `MAIN DECK EXTERIOR AFT` → `MAIN DECK AFT SPOTS POOL AND TABLE`, `MAIN DECK AFT SPOTS`, `MAIN DECK AFT STRIPS`, `MAIN DECK PS AND STB STRIPS`, `MAIN DECK COURTESY`
 - `SUN DECK EXTERIOR FWD` → `SUN DECK FWD SPOTS`, `SUN DECK FWD STRIPS`
 
 Both settings are toggled on the settings page (`/settings.html`, linked from the control panel header as "Settings ↗"), or with `POST /settings`, which takes either or both keys: `{ "SceneStateSync": true | false, "SceneSyncOffOSC": true | false }`. `GET /settings` returns the current settings. Settings persist in `state/settings.json`.

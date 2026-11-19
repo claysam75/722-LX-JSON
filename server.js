@@ -492,13 +492,13 @@ function sendSetTargetOSC(Target, State) {
         log("OSC: Main Deck Aft Strips OFF");
       }
       break;
-    case "MAIN DECK STRIPS PS/SB":
+    case "MAIN DECK PS AND STB STRIPS":
       if (State == "ON") {
         sendOSC("/exec/2/95");
-        log("OSC: Main Deck Strips PS/SB ON");
+        log("OSC: Main Deck PS and STB Strips ON");
       } else {
         sendOSC("/exec/2/94");
-        log("OSC: Main Deck Strips PS/SB OFF");
+        log("OSC: Main Deck PS and STB Strips OFF");
       }
       break;
     case "MAIN DECK COURTESY":
