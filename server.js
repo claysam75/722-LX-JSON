@@ -546,6 +546,15 @@ function sendSetTargetOSC(Target, State) {
         log("OSC: Flagmast OFF");
       }
       break;
+    case "UPPER DECK AFT STRIPS":
+      if (State == "ON") {
+        sendOSC("/exec/2/143");
+        log("OSC: Upper Deck Aft Strips ON");
+      } else {
+        sendOSC("/exec/2/142");
+        log("OSC: Upper Deck Aft Strips OFF");
+      }
+      break;
     default:
       log(`WARN: No OSC mapping for set target: ${Target}`);
   }

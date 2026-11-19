@@ -103,6 +103,7 @@ Returns feedback payloads (`Target`, `Info`, `State`) for the feedback targets. 
 - `LOWER DECK COURTESY`
 - `STAIRS`
 - `FLAGMAST`
+- `UPPER DECK AFT STRIPS`
 
 **`YACHT NAME` payloads:**
 
@@ -169,6 +170,7 @@ Sets a target to an explicit state.
 - `LOWER DECK COURTESY`
 - `STAIRS`
 - `FLAGMAST`
+- `UPPER DECK AFT STRIPS`
 - `LD DOOR SPOTS` _(normally driven automatically — see [Automation](#automation))_
 
 **Special targets:**

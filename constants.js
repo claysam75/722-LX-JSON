@@ -1208,6 +1208,7 @@ module.exports = {
     "LOWER DECK COURTESY",
     "STAIRS",
     "FLAGMAST",
+    "UPPER DECK AFT STRIPS",
   ],
 
   TOGGLE_TARGETS: [
@@ -1238,6 +1239,7 @@ module.exports = {
     "LOWER DECK COURTESY",
     "STAIRS",
     "FLAGMAST",
+    "UPPER DECK AFT STRIPS",
   ],
 
   FEEDBACK_TARGETS: [
@@ -1263,6 +1265,7 @@ module.exports = {
     "LOWER DECK COURTESY",
     "STAIRS",
     "FLAGMAST",
+    "UPPER DECK AFT STRIPS",
   ],
 
   COLOUR_INTENSITY_TARGETS: [
