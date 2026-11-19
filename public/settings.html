@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DMX-PC Settings</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+
+      /* Tokens mirror control.html — keep in sync. */
+      :root {
+        --bg: #0e0e0e;
+        --text: #e0e0e0;
+        --text-dim: #888;
+        --text-muted: #666;
+        --card-bg: #1a1a1a;
+        --card-border: #2a2a2a;
+        --divider: #222;
+        --track-bg: #2a2a2a;
+        --knob: #888;
+        --on-bg: #1a2e1a; --on-border: #2a5a2a; --on-strong: #7acc7a;
+        --err: #ff6666;
+      }
+
+      :root[data-theme="light"] {
+        --bg: #f0f2f5;
+        --text: #1a1a1a;
+        --text-dim: #666;
+        --text-muted: #888;
+        --card-bg: #ffffff;
+        --card-border: #e0e0e0;
+        --divider: #eee;
+        --track-bg: #ddd;
+        --knob: #fff;
+        --on-bg: #e8f5e8; --on-border: #88cc88; --on-strong: #2a7a2a;
+        --err: #cc2222;
+      }
+
+      body {
+        margin: 0;
+        padding: 16px 20px 32px;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: 0.04em;
+      }
+      .conn {
+        font-size: 11px;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .conn-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .conn.online .conn-dot { background: var(--on-strong); }
+      .conn.offline .conn-dot { background: var(--err); }
+      .header-right { margin-left: auto; }
+      .theme-toggle {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-dim);
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+
+      main { max-width: 720px; }
+
+      .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin: 0 0 8px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+      }
+
+      .setting {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 14px 16px;
+      }
+      .setting + .setting { border-top: 1px solid var(--divider); }
+      .setting.child { padding-left: 32px; }
+      .setting.inactive .setting-text { opacity: 0.5; }
+
+      .setting-text { flex: 1; min-width: 0; }
+      .setting-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+      .setting-desc { font-size: 12px; line-height: 1.5; color: var(--text-dim); }
+      .setting-note { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+      /* Switch */
+      .switch {
+        position: relative;
+        flex: none;
+        width: 44px;
+        height: 24px;
+        margin-top: 2px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+        background: var(--track-bg);
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px; left: 2px;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: var(--knob);
+        transition: transform 0.15s, background 0.15s;
+      }
+      .switch[aria-checked="true"] {
+        background: var(--on-bg);
+        border-color: var(--on-border);
+      }
+      .switch[aria-checked="true"]::after {
+        transform: translateX(20px);
+        background: var(--on-strong);
+      }
+      .switch:disabled { opacity: 0.5; cursor: wait; }
+      .switch:focus-visible { outline: 2px solid var(--on-strong); outline-offset: 2px; }
+
+      .error {
+        font-size: 12px;
+        color: var(--err);
+        margin-top: 10px;
+        min-height: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-header">
+      <h1>DMX-PC Settings</h1>
+      <div class="conn" id="conn"><span class="conn-dot"></span><span id="conn-text">Connecting…</span></div>
+      <div class="header-right">
+        <button class="theme-toggle" id="theme-toggle"></button>
+      </div>
+    </div>
+
+    <main>
+      <div class="section-label">Scene sync</div>
+      <div class="card">
+        <div class="setting" data-setting="SceneStateSync">
+          <div class="setting-text">
+            <div class="setting-title">Scene state sync</div>
+            <div class="setting-desc">
+              A deck scene also updates the state of that deck's individual
+              circuits, matching how Crestron tracks them: OFF turns them off,
+              ON / DIM / NIGHT turn them on. ON / DIM / NIGHT never send OSC
+              for the circuits, so the scene's programmed levels are kept.
+            </div>
+          </div>
+          <button class="switch" role="switch" aria-checked="false" disabled
+            aria-label="Scene state sync"></button>
+        </div>
+
+        <div class="setting child" data-setting="SceneSyncOffOSC">
+          <div class="setting-text">
+            <div class="setting-title">Send OSC for circuits on OFF scenes</div>
+            <div class="setting-desc">
+              On an OFF scene, also send each linked circuit's OFF command so
+              its ChamSys exec is released and matches the tracked state. When
+              off, OFF scenes update state only.
+            </div>
+            <div class="setting-note" id="off-osc-note" hidden>
+              Only applies while scene state sync is on.
+            </div>
+          </div>
+          <button class="switch" role="switch" aria-checked="false" disabled
+            aria-label="Send OSC for circuits on OFF scenes"></button>
+        </div>
+      </div>
+      <div class="error" id="error"></div>
+    </main>
+
+    <script>
+      /* ── Theme (shared key with control.html) ────────── */
+
+      const themeToggle = document.getElementById("theme-toggle");
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.textContent = theme === "light" ? "Dark" : "Light";
+        try { localStorage.setItem("theme", theme); } catch {}
+      }
+      let savedTheme = "dark";
+      try { savedTheme = localStorage.getItem("theme") || "dark"; } catch {}
+      applyTheme(savedTheme);
+      themeToggle.addEventListener("click", () => {
+        applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+      });
+
+      /* ── Settings ────────────────────────────────────── */
+
+      const socket = io();
+      const connEl = document.getElementById("conn");
+      const connText = document.getElementById("conn-text");
+      const errorEl = document.getElementById("error");
+      const offOscNote = document.getElementById("off-osc-note");
+      let settings = {};
+
+      function render() {
+        document.querySelectorAll("[data-setting]").forEach((row) => {
+          const key = row.dataset.setting;
+          const sw = row.querySelector(".switch");
+          sw.setAttribute("aria-checked", String(!!settings[key]));
+          sw.disabled = !(key in settings) || !socket.connected;
+        });
+        const syncOn = !!settings.SceneStateSync;
+        document.querySelector('[data-setting="SceneSyncOffOSC"]').classList.toggle("inactive", !syncOn);
+        offOscNote.hidden = syncOn;
+      }
+
+      document.querySelectorAll("[data-setting] .switch").forEach((sw) => {
+        sw.addEventListener("click", async () => {
+          const key = sw.closest("[data-setting]").dataset.setting;
+          sw.disabled = true;
+          errorEl.textContent = "";
+          try {
+            const res = await fetch("/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ [key]: !settings[key] }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            // Server broadcasts "settings" to every client, which re-renders.
+          } catch (e) {
+            errorEl.textContent = `Couldn't save: ${e.message}`;
+            render();
+          }
+        });
+      });
+
+      socket.on("connect", () => {
+        connEl.className = "conn online";
+        connText.textContent = "Connected";
+        render();
+      });
+      socket.on("disconnect", () => {
+        connEl.className = "conn offline";
+        connText.textContent = "Disconnected";
+        render();
+      });
+      socket.on("settings", (s) => {
+        settings = s;
+        render();
+      });
+    </script>
+  </body>
+</html>

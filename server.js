@@ -171,13 +171,30 @@ app.get("/settings", (req, res) => {
   res.json(getSettings());
 });
 
+const SETTING_LABELS = {
+  SceneStateSync: "scene state sync",
+  SceneSyncOffOSC: "scene sync OFF OSC",
+};
+
 app.post("/settings", (req, res) => {
-  const { SceneStateSync } = req.body || {};
-  if (typeof SceneStateSync !== "boolean") {
-    return res.status(400).json({ error: "SceneStateSync must be true or false" });
+  const body = req.body || {};
+  const patch = {};
+  for (const key of Object.keys(SETTING_LABELS)) {
+    if (!(key in body)) continue;
+    if (typeof body[key] !== "boolean") {
+      return res.status(400).json({ error: `${key} must be true or false` });
+    }
+    patch[key] = body[key];
   }
-  const updated = updateSettings({ SceneStateSync });
-  log(`Setting: scene state sync ${SceneStateSync ? "ENABLED" : "DISABLED"}`);
+  if (!Object.keys(patch).length) {
+    return res.status(400).json({
+      error: `Expected one of: ${Object.keys(SETTING_LABELS).join(", ")}`,
+    });
+  }
+  const updated = updateSettings(patch);
+  for (const [key, value] of Object.entries(patch)) {
+    log(`Setting: ${SETTING_LABELS[key]} ${value ? "ENABLED" : "DISABLED"}`);
+  }
   io.emit("settings", updated);
   res.json(updated);
 });
@@ -427,89 +444,8 @@ app.post("/toggle", (req, res) => {
   res.json({ Target, State: newState, Info });
 });
 
-app.post("/set", (req, res) => {
-  const { Target, Info, State } = req.body;
-  log(`Set request: ${Target} → ${State}${Info ? ` (${Info})` : ""}`);
-
-  if (Target === "FIRE ALARM") {
-    if (!["SILENT", "SOUNDING"].includes(State)) {
-      return res.status(400).json({ error: "Invalid state" });
-    }
-    setState(Target, { State });
-    broadcastStateUpdate(Target);
-    pushStateToExternal();
-    res.json({ Target, State });
-    return;
-  }
-
-  if (Target === "HULL DOOR") {
-    if (!["OPEN", "CLOSED"].includes(State)) {
-      return res.status(400).json({ error: "Invalid state" });
-    }
-    setState(Target, { State });
-    broadcastStateUpdate(Target);
-    res.json({ Target, State });
-
-    const lights = { ...getState("YACHT NAME").Lights };
-
-    if (State === "OPEN") {
-      lights["GUEST ENTRANCE"] = "ON";
-      sendOSC("/exec/2/38", []);
-      log("OSC: guest entrance name light ON (hull door opened)");
-      resyncYachtNameColours();
-    } else {
-      lights["GUEST ENTRANCE"] = "OFF";
-      sendOSC("/exec/2/37", []);
-      log("OSC: guest entrance name light OFF (hull door closed)");
-    }
-
-    setState("YACHT NAME", { Lights: lights });
-    broadcastStateUpdate("YACHT NAME");
-    pushStateToExternal();
-    return;
-  }
-
-  if (Target === "YACHT NAME") {
-    if (!["ON", "OFF"].includes(State)) {
-      return res.status(400).json({ error: "Invalid state" });
-    }
-
-    const lightKey = Info === "UD SB" ? "UD SB" : "HULL DOOR";
-    const lights = { ...getState("YACHT NAME").Lights };
-
-    lights[lightKey] = State;
-    setState("YACHT NAME", { Lights: lights });
-
-    if (lightKey === "UD SB") {
-      sendOSC(State === "ON" ? "/t/name/side/1" : "/t/name/side/0", []);
-      log(`OSC: yacht name UD SB ${State}`);
-    } else {
-      sendOSC(State === "ON" ? "/t/name/aft/1" : "/t/name/aft/0", []);
-      log(`OSC: yacht name hull-door light ${State}`);
-    }
-
-    broadcastStateUpdate("YACHT NAME");
-    pushStateToExternal();
-    return res.json({ Target, Info, State });
-  }
-
-  if (!getState(Target)) {
-    return res.status(400).json({ error: "Invalid target" });
-  }
-
-  if (!["ON", "OFF"].includes(State)) {
-    return res.status(400).json({ error: "Invalid state" });
-  }
-
-  if (!SET_TARGETS.includes(Target)) {
-    console.log(
-      `WARN: Attempt to set state for non-settable target: ${Target}`,
-    );
-    return res.status(400).json({ error: "Target cannot be set" });
-  }
-
-  setState(Target, { State, Info });
-
+// OSC for an ON/OFF set target — shared by /set and the scene-sync OFF path.
+function sendSetTargetOSC(Target, State) {
   switch (Target) {
     case "SUN DECK FWD SPOTS":
       if (State == "ON") {
@@ -611,8 +547,94 @@ app.post("/set", (req, res) => {
       }
       break;
     default:
-      log(`WARN: No OSC mapping for toggle target: ${Target}`);
+      log(`WARN: No OSC mapping for set target: ${Target}`);
   }
+}
+
+app.post("/set", (req, res) => {
+  const { Target, Info, State } = req.body;
+  log(`Set request: ${Target} → ${State}${Info ? ` (${Info})` : ""}`);
+
+  if (Target === "FIRE ALARM") {
+    if (!["SILENT", "SOUNDING"].includes(State)) {
+      return res.status(400).json({ error: "Invalid state" });
+    }
+    setState(Target, { State });
+    broadcastStateUpdate(Target);
+    pushStateToExternal();
+    res.json({ Target, State });
+    return;
+  }
+
+  if (Target === "HULL DOOR") {
+    if (!["OPEN", "CLOSED"].includes(State)) {
+      return res.status(400).json({ error: "Invalid state" });
+    }
+    setState(Target, { State });
+    broadcastStateUpdate(Target);
+    res.json({ Target, State });
+
+    const lights = { ...getState("YACHT NAME").Lights };
+
+    if (State === "OPEN") {
+      lights["GUEST ENTRANCE"] = "ON";
+      sendOSC("/exec/2/38", []);
+      log("OSC: guest entrance name light ON (hull door opened)");
+      resyncYachtNameColours();
+    } else {
+      lights["GUEST ENTRANCE"] = "OFF";
+      sendOSC("/exec/2/37", []);
+      log("OSC: guest entrance name light OFF (hull door closed)");
+    }
+
+    setState("YACHT NAME", { Lights: lights });
+    broadcastStateUpdate("YACHT NAME");
+    pushStateToExternal();
+    return;
+  }
+
+  if (Target === "YACHT NAME") {
+    if (!["ON", "OFF"].includes(State)) {
+      return res.status(400).json({ error: "Invalid state" });
+    }
+
+    const lightKey = Info === "UD SB" ? "UD SB" : "HULL DOOR";
+    const lights = { ...getState("YACHT NAME").Lights };
+
+    lights[lightKey] = State;
+    setState("YACHT NAME", { Lights: lights });
+
+    if (lightKey === "UD SB") {
+      sendOSC(State === "ON" ? "/t/name/side/1" : "/t/name/side/0", []);
+      log(`OSC: yacht name UD SB ${State}`);
+    } else {
+      sendOSC(State === "ON" ? "/t/name/aft/1" : "/t/name/aft/0", []);
+      log(`OSC: yacht name hull-door light ${State}`);
+    }
+
+    broadcastStateUpdate("YACHT NAME");
+    pushStateToExternal();
+    return res.json({ Target, Info, State });
+  }
+
+  if (!getState(Target)) {
+    return res.status(400).json({ error: "Invalid target" });
+  }
+
+  if (!["ON", "OFF"].includes(State)) {
+    return res.status(400).json({ error: "Invalid state" });
+  }
+
+  if (!SET_TARGETS.includes(Target)) {
+    console.log(
+      `WARN: Attempt to set state for non-settable target: ${Target}`,
+    );
+    return res.status(400).json({ error: "Target cannot be set" });
+  }
+
+  setState(Target, { State, Info });
+
+  sendSetTargetOSC(Target, State);
 
   broadcastStateUpdate(Target);
   pushStateToExternal();
@@ -755,18 +777,32 @@ async function sendOSCSequence(addresses, gapMs) {
 }
 
 // Mirror Crestron's own tracking: a deck scene also flips the deck's set
-// targets (OFF → OFF, ON/DIM/NIGHT → ON). State only — no OSC is sent, as the
-// ChamSys scene already sets those fixtures' levels.
+// targets (OFF → OFF, ON/DIM/NIGHT → ON).
+// - ON/DIM/NIGHT: state only — no OSC, as the ChamSys scene already holds
+//   those fixtures' levels and firing their playbacks would override them.
+// - OFF: if SceneSyncOffOSC is on, also send each target's OFF OSC, so the
+//   individual ChamSys execs are released and match our state. Sent even if
+//   we already track the target as OFF (the OFF addresses are explicit, not
+//   toggles), so any exec left running by drift is cleared too.
 function syncSceneLinkedTargets(sceneTarget, scene) {
   const linked = SCENE_LINKED_SET_TARGETS[sceneTarget];
-  if (!linked || !getSettings().SceneStateSync) return;
+  const settings = getSettings();
+  if (!linked || !settings.SceneStateSync) return;
 
   const newState = scene === "OFF" ? "OFF" : "ON";
   for (const target of linked) {
-    if (getState(target)?.State === newState) continue;
-    setState(target, { State: newState });
-    log(`Scene sync: ${target} → ${newState} (state only, no OSC)`);
-    broadcastStateUpdate(target);
+    const changed = getState(target)?.State !== newState;
+    if (changed) {
+      setState(target, { State: newState });
+      broadcastStateUpdate(target);
+    }
+
+    if (newState === "OFF" && settings.SceneSyncOffOSC) {
+      log(`Scene sync: ${target} → OFF${changed ? "" : " (already OFF)"}, sending OFF OSC`);
+      sendSetTargetOSC(target, "OFF");
+    } else if (changed) {
+      log(`Scene sync: ${target} → ${newState} (state only, no OSC)`);
+    }
   }
 }
 

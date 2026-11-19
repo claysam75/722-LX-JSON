@@ -266,12 +266,15 @@ Sets the intensity for a target, optionally scoped to a subzone. If every subzon
 - `OPEN` → `YACHT NAME.Lights["GUEST ENTRANCE"] = ON`, OSC `/exec/2/38`, then the stored `YACHT NAME` colours are re-asserted (all-subzone executor if every subzone matches, otherwise per subzone) so the guest entrance name comes up matching the other name lights.
 - `CLOSED` → `GUEST ENTRANCE = OFF`, OSC `/exec/2/37`.
 
-**Scene state sync** (testing; toggled by the `SceneStateSync` setting, off by default). Crestron treats a deck scene as also switching that deck's set targets, so `/scene` mirrors it in our state: `OFF` → linked targets `OFF`, `ON`/`DIM`/`NIGHT` → `ON`. **No OSC is sent for the linked targets**, because the ChamSys scene already holds their levels. This stops users having to double-press those targets after a scene change. Links are in `SCENE_LINKED_SET_TARGETS` in `constants.js`:
+**Scene state sync** (testing; toggled by the `SceneStateSync` setting, off by default). Crestron treats a deck scene as also switching that deck's set targets, so `/scene` mirrors it in our state. This stops users having to double-press those targets after a scene change.
+
+- `ON`/`DIM`/`NIGHT` → linked targets `ON`, **state only, no OSC**. The ChamSys scene already holds their levels, and firing the individual playbacks would override them.
+- `OFF` → linked targets `OFF`. If the `SceneSyncOffOSC` setting is on (the default), **each target's OFF OSC is also sent** (the same address as `POST /set … OFF`), so the individual ChamSys execs are released and match our state. This is sent even for targets already tracked as `OFF`. With `SceneSyncOffOSC` off, OFF scenes update state only. Links are in `SCENE_LINKED_SET_TARGETS` in `constants.js`:
 
 - `MAIN DECK EXTERIOR AFT` → `MAIN DECK AFT SPOTS POOL AND TABLE`, `MAIN DECK AFT SPOTS`, `MAIN DECK AFT STRIPS`, `MAIN DECK STRIPS PS/SB`, `MAIN DECK COURTESY`
 - `SUN DECK EXTERIOR FWD` → `SUN DECK FWD SPOTS`, `SUN DECK FWD STRIPS`
 
-Toggle it from the control panel header ("Scene sync"), or with `POST /settings` `{ "SceneStateSync": true | false }`. `GET /settings` returns the current settings. Settings persist in `state/settings.json`.
+Both settings are toggled on the settings page (`/settings.html`, linked from the control panel header as "Settings ↗"), or with `POST /settings`, which takes either or both keys: `{ "SceneStateSync": true | false, "SceneSyncOffOSC": true | false }`. `GET /settings` returns the current settings. Settings persist in `state/settings.json`.
 
 **LD door spots.** `syncLdDoorSpots()` runs after any `/scene`, `/colour` or `/intensity` request for `LOWER DECK WET AREA`. `LD DOOR SPOTS` is turned ON when the door is `OPEN` **and** the wet area is active (scene set and not `OFF`, or `State == ON`, or any colour subzone set); otherwise OFF. It is not re-evaluated on the door change itself.
 
@@ -285,7 +288,7 @@ Toggle it from the control panel header ("Scene sync"), or with `POST /settings`
 | `state:update` | Server → Client | Single updated state object                                                                                                  |
 | `log`          | Server → Client | `{ message, timestamp, group }` — `group` is shared by every line produced by one HTTP request or socket connection, including async lines (external push failures, vessel preset sequences); `null` otherwise |
 | `log:history`  | Server → Client | Array of the last 500 log entries (emitted on connection)                                                                    |
-| `settings`     | Server → Client | `{ SceneStateSync }` — emitted on connection and whenever a setting changes                                                  |
+| `settings`     | Server → Client | `{ SceneStateSync, SceneSyncOffOSC }` — emitted on connection and whenever a setting changes                                 |
 
 ---
 

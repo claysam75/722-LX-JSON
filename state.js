@@ -14,7 +14,11 @@ const state = new Map();
 // Runtime feature switches, persisted separately from target state so they
 // never appear in state feedback payloads.
 const DEFAULT_SETTINGS = {
+  // Deck scenes update the state of their linked set targets.
   SceneStateSync: false,
+  // When SceneStateSync is on, OFF scenes also send each linked target's
+  // OFF OSC so the individual ChamSys execs are released.
+  SceneSyncOffOSC: true,
 };
 let settings = { ...DEFAULT_SETTINGS };
 
